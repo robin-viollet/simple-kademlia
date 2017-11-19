@@ -1,11 +1,33 @@
-//
-// Created by jestjest on 11/11/17.
-//
+/*
+ *
+ * This defines a library using boost::asio and cereal that sends messages
+ * as UDP packets. Each Kademlia node uses this library to communicate
+ * with each other.
+ *
+ * Example usage:
+ * ---------------------
+ * KademliaNodeInfo local(...);
+ * KademliaProtocol protocol(local);
+ * protocol.sendMessage(kdml::net::MessageType.PING, KademliaNodeInfo dest);
+ *
+ * protocol.sendMessage(kdml::net::MessageType.FIND_NODE, KademliaNodeInfo dest, Message);
+ */
 
-#ifndef SIMPLE_KADEMLIA_KADEMLIAPROTOCOL_HPP
-#define SIMPLE_KADEMLIA_KADEMLIAPROTOCOL_HPP
+#pragma once
 
 #include "kademlianodeinfo.hpp"
+#include "messages.hpp"
+#include <boost/asio.hpp>
+
+class KademliaProtocol {
+    void sendPing()
+
+public:
+    void sendMessage(kdml::net::Message msgType, kdml::net::Message msg,
+                     KademliaNodeInfo nodeInfo);
+
+};
+
 
 // RPCs
 // returns k KademliaNodeInfo structs closest to key/ID, NOT RECURSIVE
@@ -34,6 +56,3 @@ findKClosestNodes(id) {
             // if these don't return closer nodes, query first k in PQueue
         // finish when have received responses from k closest nodes
 }
-
-
-#endif //SIMPLE_KADEMLIA_KADEMLIAPROTOCOL_HPP
