@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(244b_final)
+project(simple-kademlia)
 
 set(CMAKE_CXX_STANDARD 11)
 
@@ -8,8 +8,13 @@ include_directories(${INCL})
 
 file(GLOB SOURCE_FILES
         "include/*"
-        "*.h"
-        "*.cpp"
+        "include/messages/*"
+        "src/*"
+        "src/messages/*"
+        "test/*"
         )
-add_library(244b_final ${SOURCE_FILES} main.cpp)
-add_executable(testKademlia main.cpp)
+add_library(simpleKademlia ${SOURCE_FILES})
+add_executable(testSerialization test/serialization.cpp)
+target_link_libraries(testSerialization simpleKademlia)
+
+enable_testing()
