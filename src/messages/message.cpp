@@ -15,5 +15,6 @@ namespace kdml {
         kdml::net::MessageType kdml::net::Message::getType() const {
             return type;
         }
+
     }
 }

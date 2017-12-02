@@ -5,26 +5,32 @@
 #ifndef SIMPLE_KADEMLIA_ROUTINGTABLE_HPP
 #define SIMPLE_KADEMLIA_ROUTINGTABLE_HPP
 
-struct RoutingTreeNode {
-    kBucket* bucket;
-    RoutingTreeNode* zero;
-    RoutingTreeNode* one;
-
-    RoutingTreeNode(kBucket* bucket) {
+namespace kdml {
+    struct kBucket {
 
     };
 
-    RoutingTreeNode(kBucket* bucket,
-                    RoutingTreeNode* zero, RoutingTreeNode* one) {
+    struct RoutingTreeNode {
+        kBucket *bucket;
+        RoutingTreeNode *zero;
+        RoutingTreeNode *one;
+
+        RoutingTreeNode(kBucket *bucket) {
+
+        };
+
+        RoutingTreeNode(kBucket *bucket,
+                        RoutingTreeNode *zero, RoutingTreeNode *one) {
+
+        };
+    };
+
+    class RoutingTree {
+        RoutingTreeNode *root;
+
+    public:
 
     };
-};
-
-class RoutingTree {
-    RoutingTreeNode* root;
-
-public:
-
-};
+}
 
 #endif //SIMPLE_KADEMLIA_ROUTINGTABLE_HPP

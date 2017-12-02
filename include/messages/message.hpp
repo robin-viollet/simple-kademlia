@@ -2,10 +2,10 @@
 // Created by jestjest on 11/19/17.
 //
 
-#ifndef INC_244B_FINAL_MESSAGE_HPP
-#define INC_244B_FINAL_MESSAGE_HPP
+#ifndef SIMPLE_KADEMLIA_MESSAGE_HPP
+#define SIMPLE_KADEMLIA_MESSAGE_HPP
 
-#include "kademlianodeinfo.hpp"
+#include "node/kademlianodeinfo.hpp"
 #include "messages/messageType.hpp"
 
 namespace kdml {
@@ -27,8 +27,13 @@ namespace kdml {
                 msg.print(stream);
                 return stream;
             }
+
+            template <class Archive>
+            void serialize(Archive& ar) {
+                ar(src, dest);
+            }
         };
     }
 }
 
-#endif //INC_244B_FINAL_MESSAGE_HPP
+#endif //SIMPLE_KADEMLIA_MESSAGE_HPP

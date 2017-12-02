@@ -6,26 +6,47 @@
  *
  * Example usage:
  * ---------------------
- * KademliaNodeInfo local(...);
- * KademliaProtocol protocol(local);
  * protocol.sendMessage(KademliaNodeInfo dest, kdml::net::Message message);
  * protocol.sendMessage(KademliaNodeInfo dest, kdml::net::Message message);
  */
 
-#include "kademlianodeinfo.hpp"
+#include "node/kademlianodeinfo.hpp"
+#include "routingtree.hpp"
+#include "callbacks.hpp"
 #include <boost/asio.hpp>
 #include <messages/message.hpp>
+#include <thread>
+
+
 
 namespace kdml {
+
     class KademliaProtocol {
+
+        using namespace boost::asio::ip;
+
         KademliaNodeInfo owner;
-//        void sendPing();
+        RoutingTree routingTree;
+
+        boost::asio::io_service ioService;
+        boost::optional<boost::asio::io_service::work> ioLock;
+        udp::socket socket;
+        udp::endpoint remoteEndpoint;
+
+
+        // TODO Multiple threads, but maybe not needed.
+        std::thread ioThread;
+        void startReceive();
 
     public:
-        explicit KademliaProtocol(KademliaNodeInfo owner);
+        KademliaProtocol(const KademliaNodeInfo& owner);
 
-        void sendMessage(net::Message& msg, KademliaNodeInfo& dest);
+        void async_get(boost::multiprecision::uint256_t key, kdml::GetCallback callback);
 
+        void join();
+
+        void handleReceive(const boost::system::error_code& error,
+                           std::size_t /*bytes_transferred*/);
     };
 }
 

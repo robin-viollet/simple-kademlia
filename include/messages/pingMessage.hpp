@@ -2,8 +2,8 @@
 // Created by jestjest on 11/19/17.
 //
 
-#ifndef INC_244B_FINAL_PINGMESSAGE_HPP
-#define INC_244B_FINAL_PINGMESSAGE_HPP
+#ifndef SIMPLE_KADEMLIA_PINGMESSAGE_HPP
+#define SIMPLE_KADEMLIA_PINGMESSAGE_HPP
 
 #include "messages/message.hpp"
 #include <cereal/types/polymorphic.hpp>
@@ -19,7 +19,7 @@ namespace kdml {
 
             template<class Archive>
             void serialize(Archive& ar) {
-                ar(src, dest);
+                ar(cereal::base_class<Message>(this));
             }
 
             template<class Archive>
@@ -36,4 +36,4 @@ namespace kdml {
 CEREAL_REGISTER_TYPE(kdml::net::PingMessage);
 CEREAL_REGISTER_POLYMORPHIC_RELATION(kdml::net::Message, kdml::net::PingMessage);
 
-#endif //INC_244B_FINAL_PINGMESSAGE_HPP
+#endif //SIMPLE_KADEMLIA_PINGMESSAGE_HPP

@@ -6,13 +6,17 @@
 #define SIMPLE_KADEMLIA_KBUCKET_HPP
 
 #include <list>
+#include "node/kademlianodeinfo.hpp"
 
-class kBucket {
-std::list<KademliaNodeInfo> contacts;
+namespace kdml {
+    class kBucket {
+        std::list<KademliaNodeInfo> contacts;
 
-public:
-    bool insertNode(key);
-    kBucket* split();
-};
+    public:
+        bool insertNode(std::string key);
+
+        kBucket *split();
+    };
+}
 
 #endif //SIMPLE_KADEMLIA_KBUCKET_HPP

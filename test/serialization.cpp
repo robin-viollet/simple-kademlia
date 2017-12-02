@@ -5,7 +5,7 @@
 #define CATCH_CONFIG_MAIN
 #include "catch.hpp"
 
-#include <kademlianodeinfo.hpp>
+#include <node/kademlianodeinfo.hpp>
 #include <messages/message.hpp>
 #include <messages/pingMessage.hpp>
 #include "cereal/archives/binary.hpp"
@@ -20,8 +20,8 @@ TEST_CASE("Serialize-Deserialize") {
     {
         cereal::BinaryOutputArchive oarchive(ss);     // create output archive
 
-        kdml::KademliaNodeInfo src = {"127.0.0.1", 8000, "1"};
-        kdml::KademliaNodeInfo dest = {"127.0.0.1", 8001, "2"};
+        kdml::KademliaNodeInfo src = {"127.0.0.1", 8000};
+        kdml::KademliaNodeInfo dest = {"127.0.0.1", 8001};
         // Create instances of the derived classes, but only keep base class pointers
         before = std::make_shared<kdml::net::PingMessage>(src, dest);
         oarchive(before);     // write data to archive
@@ -45,4 +45,6 @@ TEST_CASE("Serialize-Deserialize") {
 
     REQUIRE(static_cast<int>(before->getType()) == static_cast<int>(after->getType()));
     REQUIRE(beforeStr == afterStr);
+
+    std::cout << afterStr << std::endl;
 }

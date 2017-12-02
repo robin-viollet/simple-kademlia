@@ -7,13 +7,12 @@ set(INCL ./include)
 include_directories(${INCL})
 
 file(GLOB SOURCE_FILES
-        "include/*"
-        "include/messages/*"
         "src/*"
         "src/messages/*"
-        "test/*"
+        "src/node/*"
         )
-add_library(simpleKademlia ${SOURCE_FILES})
+
+add_library(simpleKademlia ${SOURCE_FILES} )
 add_executable(testSerialization test/serialization.cpp)
 target_link_libraries(testSerialization simpleKademlia)
 

@@ -6,9 +6,8 @@
 
 namespace kdml {
     namespace net {
-
-        PingMessage::PingMessage(KademliaNodeInfo &src,
-                                 KademliaNodeInfo &dest) :
+        PingMessage::PingMessage(KademliaNodeInfo& src,
+                                 KademliaNodeInfo& dest) :
                 Message(MessageType::PING, src, dest) {}
 
 
