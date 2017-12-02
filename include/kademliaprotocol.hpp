@@ -14,7 +14,6 @@
 #include "routingtree.hpp"
 #include "callbacks.hpp"
 #include <boost/asio.hpp>
-#include <messages/message.hpp>
 #include <thread>
 
 
@@ -23,15 +22,13 @@ namespace kdml {
 
     class KademliaProtocol {
 
-        using namespace boost::asio::ip;
-
         KademliaNodeInfo owner;
         RoutingTree routingTree;
 
         boost::asio::io_service ioService;
-        boost::optional<boost::asio::io_service::work> ioLock;
-        udp::socket socket;
-        udp::endpoint remoteEndpoint;
+        std::unique_ptr<boost::asio::io_service::work> ioLock;
+        boost::asio::ip::udp::socket socket;
+        boost::asio::ip::udp::endpoint remoteEndpoint;
 
 
         // TODO Multiple threads, but maybe not needed.

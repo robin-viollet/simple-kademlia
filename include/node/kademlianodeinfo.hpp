@@ -15,11 +15,11 @@ using namespace boost::random;
 namespace kdml {
 
     // TODO Hash the IP address instead?
-    typedef independent_bits_engine<mt19937, 256, boost::multiprecision::mpz_int> generator_type;
+    typedef independent_bits_engine<mt19937, 256, boost::multiprecision::uint256_t> generator_type;
 
     struct KademliaNodeInfo {
         std::string ipAddr;
-        unsigned short port{-1};
+        unsigned short port{0};
         boost::multiprecision::uint256_t id;
 
         KademliaNodeInfo() = default;

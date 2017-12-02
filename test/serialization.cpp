@@ -9,9 +9,10 @@
 #include <messages/message.hpp>
 #include <messages/pingMessage.hpp>
 #include "cereal/archives/binary.hpp"
+#include <node/kademlianode.hpp>
 
 
-TEST_CASE("Serialize-Deserialize") {
+TEST_CASE("Serialize-Deserialize", "[cereal]") {
 
     std::stringstream ss;       // any stream can be used
     std::shared_ptr<kdml::net::Message> before;
@@ -48,3 +49,5 @@ TEST_CASE("Serialize-Deserialize") {
 
     std::cout << afterStr << std::endl;
 }
+
+

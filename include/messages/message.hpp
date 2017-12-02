@@ -7,6 +7,7 @@
 
 #include "node/kademlianodeinfo.hpp"
 #include "messages/messageType.hpp"
+#include <cereal/types/memory.hpp>
 
 namespace kdml {
     namespace net {
