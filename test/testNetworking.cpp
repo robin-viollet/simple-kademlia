@@ -14,25 +14,22 @@ using namespace kdml::net;
 using boost::asio::ip::udp;
 
 std::shared_ptr<Message> makePing(const std::string& fromAddr,
-                                  unsigned short fromPort,
-                                  const std::string& toAddr,
-                                  unsigned short toPort) {
-    kdml::KademliaNodeInfo src = {fromAddr, fromPort};
-    kdml::KademliaNodeInfo dest = {toAddr, toPort};
-    return std::make_shared<PingMessage>(src, dest);
+                                  unsigned short fromPort) {
+    kdml::NodeInfo src = {fromAddr, fromPort};
+    return std::make_shared<PingMessage>(src.id, 1337);
 }
 
-TEST_CASE("Send ping message", "[messaging]") {
+TEST_CASE("messaging-send ping", "[messaging]") {
     kdml::KademliaNode server("127.0.0.1", 5001);
 
-    boost::asio::io_service io_service;
-    udp::resolver resolver(io_service);
+    boost::asio::io_service ioService;
+    udp::resolver resolver(ioService);
     udp::resolver::query query(udp::v4(), "127.0.0.1", "5001");
-    udp::endpoint receiver_endpoint = *resolver.resolve(query);
-    udp::socket socket(io_service);
+    udp::endpoint receiverEndpoint = *resolver.resolve(query);
+    udp::socket socket(ioService);
     socket.open(udp::v4());
 
-    std::shared_ptr<Message> ping = makePing("127.0.0.1", 5000, "127.0.0.1", 5001);
+    std::shared_ptr<Message> ping = makePing("192.168.0.1", 5000);
     boost::asio::streambuf buf;
     {
         std::ostream os(&buf);
@@ -40,9 +37,9 @@ TEST_CASE("Send ping message", "[messaging]") {
         oarchive(ping);
     }
 
-    socket.send_to(buf.data(), receiver_endpoint);
+    socket.send_to(buf.data(), receiverEndpoint);
 
-    std::chrono::seconds duration(1);
+    std::chrono::seconds duration(1);       // Pause before tearing down server
     std::this_thread::sleep_for(duration);
 
     server.join();

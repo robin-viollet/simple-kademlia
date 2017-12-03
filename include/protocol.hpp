@@ -1,44 +1,38 @@
-/*
- *
- * This defines a library using boost::asio and cereal that sends messages
- * as UDP packets. Each Kademlia node uses this library to communicate
- * with each other.
- *
- * Example usage:
- * ---------------------
- * protocol.sendMessage(KademliaNodeInfo dest, kdml::net::Message message);
- * protocol.sendMessage(KademliaNodeInfo dest, kdml::net::Message message);
- */
+#ifndef SIMPLE_KADEMLIA_PROTOCOL_HPP
+#define SIMPLE_KADEMLIA_PROTOCOL_HPP
 
-#include "node/kademlianodeinfo.hpp"
+#include "node/nodeinfo.hpp"
 #include "routingtree.hpp"
 #include "callbacks.hpp"
 #include <boost/asio.hpp>
 #include <thread>
 
 
-
 namespace kdml {
 
-    class KademliaProtocol {
+    class Protocol {
 
-        KademliaNodeInfo owner;
+        NodeInfo owner;
         RoutingTree routingTree;
 
         boost::asio::io_service ioService;
         std::unique_ptr<boost::asio::io_service::work> ioLock;
         boost::asio::ip::udp::socket socket;
-        boost::asio::ip::udp::endpoint remoteEndpoint;
+        boost::asio::ip::udp::endpoint remote;
 
-
-        // TODO Multiple threads, but maybe not needed.
         std::thread ioThread;
         void startReceive();
 
+        void probePeers(std::vector<NodeInfo> endpoints, SimpleCallback onComplete);
+        boost::system::error_code populateBuf(boost::asio::streambuf& sb);
+        std::vector<NodeInfo> resolveEndpoint(const NodeInfo& ep);
+
     public:
-        KademliaProtocol(const KademliaNodeInfo& owner);
+        explicit Protocol(const NodeInfo& owner);
 
         void async_get(boost::multiprecision::uint256_t key, kdml::GetCallback callback);
+
+        void bootstrap(const NodeInfo& peer);
 
         void join();
 
@@ -47,9 +41,11 @@ namespace kdml {
     };
 }
 
+#endif SIMPLE_KADEMLIA_PROTOCOL_HPP
+
 //
 //// RPCs
-//// returns k KademliaNodeInfo structs closest to key/ID, NOT RECURSIVE
+//// returns k NodeInfo structs closest to key/ID, NOT RECURSIVE
 //// callback: contains (value, list of k nodes)
 //findNode(key);
 //findValue(key);  // If receiver has id in hashtable, return value.
@@ -60,7 +56,7 @@ namespace kdml {
 //// stores key value at given node
 //store(key, value);
 //
-//// returns k KademliaNodeInfo structs closest to key
+//// returns k NodeInfo structs closest to key
 //// A = 1
 //findKClosestNodes(id) {
 //        // keep track of closest node

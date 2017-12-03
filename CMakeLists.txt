@@ -11,7 +11,6 @@ include_directories(${INCL})
 
 file(GLOB SOURCE_FILES
         "src/*"
-        "src/messages/*"
         "src/node/*"
         )
 

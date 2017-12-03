@@ -5,7 +5,7 @@
 #ifndef SIMPLE_KADEMLIA_MESSAGE_HPP
 #define SIMPLE_KADEMLIA_MESSAGE_HPP
 
-#include "node/kademlianodeinfo.hpp"
+#include "node/nodeinfo.hpp"
 #include "messages/messageType.hpp"
 #include <cereal/types/memory.hpp>
 
@@ -14,14 +14,12 @@ namespace kdml {
 
         class Message {
         protected:
-            MessageType type;
-            KademliaNodeInfo src;
-            KademliaNodeInfo dest;
+            uint16_t tid;
+            MessageType mtype;
         public:
-            Message(MessageType type,
-                    KademliaNodeInfo src, KademliaNodeInfo dest);
+            Message(uint16_t tid, MessageType type) : tid(tid), mtype(type) {}
 
-            MessageType getType() const;
+            MessageType getMessageType() const { return mtype; }
             virtual void print(std::ostream&) const = 0;
 
             friend std::ostream& operator<<(std::ostream& stream, Message& msg) {
@@ -31,7 +29,7 @@ namespace kdml {
 
             template <class Archive>
             void serialize(Archive& ar) {
-                ar(src, dest);
+                ar(tid, mtype);
             }
         };
     }

@@ -6,7 +6,7 @@
 #define SIMPLE_KADEMLIA_KADEMLIANODE_HPP
 
 #include "callbacks.hpp"
-#include "kademliaprotocol.hpp"
+#include "protocol.hpp"
 #include <boost/asio/io_service.hpp>
 #include <boost/thread.hpp>
 #include <functional>
@@ -16,17 +16,13 @@
 
 namespace kdml {
     class KademliaNode {
-        KademliaProtocol protocol;
-
-        // TODO SHA 256 of more than just a string would be better.
-        std::hash<std::string> hashCode;
+        Protocol protocol;
 
     public:
 
         KademliaNode(std::string ipAddr, unsigned short port);
 
-        // TODO Implement actual bootstrapping of all previous seen vs. assuming success.
-        void bootstrap(KademliaNodeInfo peer);
+        void bootstrap(const NodeInfo& peer);
 
         // TODO Wrap key in class
         void get(std::string key, GetCallback callback);
