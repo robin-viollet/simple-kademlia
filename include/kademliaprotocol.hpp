@@ -12,7 +12,7 @@
  * protocol.sendMessage(KademliaNodeInfo dest, kdml::net::Message message);
  */
 
-#include "kademlianodeinfo.hpp"
+#include "routing tree/kademlianodeinfo.hpp"
 #include <boost/asio.hpp>
 #include <messages/message.hpp>
 

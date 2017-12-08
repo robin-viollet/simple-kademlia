@@ -5,7 +5,7 @@
 #ifndef INC_244B_FINAL_MESSAGE_HPP
 #define INC_244B_FINAL_MESSAGE_HPP
 
-#include "kademlianodeinfo.hpp"
+#include "routing tree/kademlianodeinfo.hpp"
 #include "messages/messageType.hpp"
 
 namespace kdml {

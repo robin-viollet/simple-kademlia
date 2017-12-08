@@ -5,7 +5,7 @@
 #define CATCH_CONFIG_MAIN
 #include "catch.hpp"
 
-#include <kademlianodeinfo.hpp>
+#include <routing tree/kademlianodeinfo.hpp>
 #include <messages/message.hpp>
 #include <messages/pingMessage.hpp>
 #include "cereal/archives/binary.hpp"

@@ -12,6 +12,8 @@ class KademliaNode {
     // hashmap<160-bit keys, local filepath?>
 
 public:
+    
+
 };
 
 #endif //SIMPLE_KADEMLIA_KADEMLIANODE_HPP

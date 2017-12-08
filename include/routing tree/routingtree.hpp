@@ -5,6 +5,8 @@
 #ifndef SIMPLE_KADEMLIA_ROUTINGTABLE_HPP
 #define SIMPLE_KADEMLIA_ROUTINGTABLE_HPP
 
+#include "kbucket.hpp"
+
 struct RoutingTreeNode {
     kBucket* bucket;
     RoutingTreeNode* zero;
