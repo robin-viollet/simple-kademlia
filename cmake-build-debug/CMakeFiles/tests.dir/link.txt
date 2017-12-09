@@ -1,0 +1,1 @@
+/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++  -g -Wl,-search_paths_first -Wl,-headerpad_max_install_names  CMakeFiles/tests.dir/test/serialization.cpp.o CMakeFiles/tests.dir/test/testNetworking.cpp.o  -o tests libsimpleKademlia.a /usr/local/lib/libboost_system-mt.dylib -lpthread 

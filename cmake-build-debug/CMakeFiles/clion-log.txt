@@ -1,0 +1,41 @@
+/Applications/CLion.app/Contents/bin/cmake/bin/cmake -DCMAKE_BUILD_TYPE=Debug -G "CodeBlocks - Unix Makefiles" /Users/sierrakaplan-nelson/Documents/COLLEGE/Fall2017/CS244B/simple-kademlia
+CMake Warning at /Applications/CLion.app/Contents/bin/cmake/share/cmake-3.8/Modules/Platform/Darwin-Initialize.cmake:121 (message):
+  Ignoring CMAKE_OSX_SYSROOT value:
+
+   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.12.sdk
+
+  because the directory does not exist.
+Call Stack (most recent call first):
+  /Applications/CLion.app/Contents/bin/cmake/share/cmake-3.8/Modules/CMakeSystemSpecificInitialize.cmake:8 (include)
+  CMakeLists.txt:2 (project)
+
+
+CMake Warning at /Applications/CLion.app/Contents/bin/cmake/share/cmake-3.8/Modules/FindBoost.cmake:765 (message):
+  Imported targets not available for Boost version
+Call Stack (most recent call first):
+  /Applications/CLion.app/Contents/bin/cmake/share/cmake-3.8/Modules/FindBoost.cmake:869 (_Boost_COMPONENT_DEPENDENCIES)
+  /Applications/CLion.app/Contents/bin/cmake/share/cmake-3.8/Modules/FindBoost.cmake:1472 (_Boost_MISSING_DEPENDENCIES)
+  CMakeLists.txt:6 (find_package)
+
+
+CMake Error at /Applications/CLion.app/Contents/bin/cmake/share/cmake-3.8/Modules/FindBoost.cmake:1842 (message):
+  Unable to find the requested Boost libraries.
+
+  Unable to find the Boost header files.  Please set BOOST_ROOT to the root
+  directory containing Boost or BOOST_INCLUDEDIR to the directory containing
+  Boost's headers.
+Call Stack (most recent call first):
+  CMakeLists.txt:6 (find_package)
+
+
+CMake Error: The following variables are used in this project, but they are set to NOTFOUND.
+Please set them or make sure they are set and tested correctly in the CMake files:
+Boost_INCLUDE_DIR (ADVANCED)
+   used as include directory in directory /Users/sierrakaplan-nelson/Documents/COLLEGE/Fall2017/CS244B/simple-kademlia
+   used as include directory in directory /Users/sierrakaplan-nelson/Documents/COLLEGE/Fall2017/CS244B/simple-kademlia
+   used as include directory in directory /Users/sierrakaplan-nelson/Documents/COLLEGE/Fall2017/CS244B/simple-kademlia
+   used as include directory in directory /Users/sierrakaplan-nelson/Documents/COLLEGE/Fall2017/CS244B/simple-kademlia
+   used as include directory in directory /Users/sierrakaplan-nelson/Documents/COLLEGE/Fall2017/CS244B/simple-kademlia
+
+-- Configuring incomplete, errors occurred!
+See also "/Users/sierrakaplan-nelson/Documents/COLLEGE/Fall2017/CS244B/simple-kademlia/cmake-build-debug/CMakeFiles/CMakeOutput.log".

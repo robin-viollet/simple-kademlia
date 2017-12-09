@@ -39,7 +39,7 @@ TEST_CASE("messaging-send ping", "[messaging]") {
 
     socket.send_to(buf.data(), receiverEndpoint);
 
-    std::chrono::seconds duration(1);       // Pause before tearing down server
+    std::chrono::seconds duration(1);       // Let server receive the message.
     std::this_thread::sleep_for(duration);
 
     server.join();

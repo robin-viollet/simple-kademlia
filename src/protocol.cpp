@@ -15,7 +15,10 @@ namespace kdml {
     namespace mp = boost::multiprecision;
 
     Protocol::Protocol(const NodeInfo& node)
-            : owner(node), ioService{},
+            : owner(node),
+              routingTable(),
+              network(node, routingTable),
+              ioService{},
               ioLock(new asio::io_service::work(ioService)),
               socket(ioService, udp::endpoint(udp::v4(), node.port)) {
 
@@ -36,23 +39,7 @@ namespace kdml {
     // TODO Asynchronous bootstrap (queue messages while bootstrapping).
     void Protocol::bootstrap(const NodeInfo& peer) {
         std::vector<NodeInfo> endpoints = resolveEndpoint(peer);
-
-        SimpleCallback onComplete = [this](bool failure) {
-            if (failure)
-                throw "Failed to find peers";       // TODO Custom error codes.
-//            refreshBuckets();
-        };
-
-        probePeers(endpoints, std::move(onComplete));
-
-//        send FIND_NODE(local)  -> peer
-//        populate table with found nodes
-//        callback:
-//        for each other kbucket {
-//                look up random key in that bucket
-//                send FIND_NODE(key) -> closest node to key
-//                populate table with found nodes
-//        }
+        probePeers(endpoints);
     }
 
     void Protocol::startReceive() {
@@ -88,12 +75,25 @@ namespace kdml {
         startReceive();
     }
 
-    void Protocol::probePeers(std::vector<NodeInfo> endpoints,
-                                      SimpleCallback onComplete) {
+    void Protocol::probePeers(Nodes& endpoints) {
         if (endpoints.empty()) {
-            onComplete(true);
+            throw "Failed to find peers";       // TODO Custom error codes.
         } else {
+            NodeInfo ep = endpoints.back();
+            endpoints.pop_back();
 
+            SimpleCallback onPong = [=](bool failure) {
+                if (failure) {
+                    probePeers(endpoints);
+                } else {
+                    auto bucket = routingTable.insert(ep);
+                    network.sendFindNode(owner.id, ep, [bucket](Nodes& found){
+                        refreshBuckets(bucket);
+                    });
+                }
+            };
+
+            network.sendPing(ep, onPong);
         }
     }
 
@@ -128,5 +128,17 @@ namespace kdml {
         }
         return endpoints;
     }
+
+    void Protocol::refreshBuckets(RoutingTree::iterator start) {
+//        for (; start != routingTable::end(); start++) {
+//            Id randomId = routingTable.getRandomId(start);
+//            Nodes
+//            network.sendFindNode(owner.id, , [bucket](Nodes& found){
+//                refreshBuckets(bucket);
+//            });
+//        }
+    }
+
+    //todo: define RPC callbacks
 
 }

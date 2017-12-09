@@ -19,12 +19,13 @@
 namespace kdml {
 
     namespace mp = boost::multiprecision;
+    using Id = std::array<unsigned char, 32>;
 
     struct NodeInfo {
+
         unsigned long ipAddr{};
         unsigned short port{0};
-        std::array<unsigned char, 32> id{};
-        mp::uint256_t idNum;
+        uint256_t id{};
 
         NodeInfo() = default;
 

@@ -55,9 +55,9 @@ namespace kdml {
             return getTreeNode(root, node_id, 255);
         }
 
-        std::vector<NodeInfo*> getClosestNodes(int num, uint256_t node_id) {
+        std::vector<NodeInfo*> getClosestNodes(int num, uint256_t key) {
             std::vector<NodeInfo*> closest;
-            RoutingTreeNode *treeNode = getTreeNode(node_id);
+            RoutingTreeNode *treeNode = getTreeNode(key);
             int num_nodes = 0;
             while (num_nodes < num && treeNode != NULL) {
                 kBucket *bucket = treeNode->bucket;
@@ -77,13 +77,13 @@ namespace kdml {
 
         // Return k nodes from tree node, and if not enough keep getting more from parent
         // Unless < k in whole tree in which case returns all nodes it knows about
-        std::vector<NodeInfo*> getKClosestNodes(uint256_t node_id) {
+        std::vector<NodeInfo*> getKClosestNodes(uint256_t key) {
             //todo: make k in kbucket global config?
-            return getClosestNodes(k, node_id);
+            return getClosestNodes(k, key);
         }
 
-        std::vector<NodeInfo*> getAClosestNodes(int a, uint256_t node_id) {
-            return getClosestNodes(a, node_id);
+        std::vector<NodeInfo*> getAClosestNodes(int a, uint256_t key) {
+            return getClosestNodes(a, key);
         }
 
         bool insertNode(NodeInfo *node) {

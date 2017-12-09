@@ -21,6 +21,7 @@ namespace kdml {
             Message(uint16_t tid, MessageType type) : tid(tid), mtype(type) {}
 
             MessageType getMessageType() const { return mtype; }
+
             virtual void print(std::ostream&) const = 0;
 
             friend std::ostream& operator<<(std::ostream& stream, Message& msg) {
