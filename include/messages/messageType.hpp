@@ -10,14 +10,14 @@ namespace kdml {
         enum class MessageType {
             QUERY,
             RESPONSE,
-            ERROR
+            ERROR,
         };
 
         enum class QueryType {
             PING,
             FIND_NODE,
-            GET_PEERS,
-            ANNOUNCE_PEER
+            FIND_VALUE,
+            STORE,
         };
 
         inline std::ostream& operator<<(std::ostream& os, const MessageType value){
@@ -39,8 +39,8 @@ namespace kdml {
             switch(value){
                 PROCESS_VAL(QueryType::PING);
                 PROCESS_VAL(QueryType::FIND_NODE);
-                PROCESS_VAL(QueryType::GET_PEERS);
-                PROCESS_VAL(QueryType::ANNOUNCE_PEER);
+                PROCESS_VAL(QueryType::FIND_VALUE);
+                PROCESS_VAL(QueryType::STORE);
             }
 #undef PROCESS_VAL
 

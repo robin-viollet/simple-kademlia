@@ -15,7 +15,7 @@ namespace kdml {
         class PingMessage : public QueryMessage {
 
         public:
-            PingMessage(std::array<unsigned char, 32> id, uint16_t tid)
+            PingMessage(const std::array<unsigned char, 32>& id, uint16_t tid)
                     : QueryMessage(id, tid, QueryType::PING) {}
 
             void print(std::ostream& os) const override {

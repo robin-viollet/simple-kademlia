@@ -4,6 +4,7 @@
 #include "node/nodeinfo.hpp"
 #include "routingtree.hpp"
 #include "callbacks.hpp"
+#include "network.hpp"
 #include <boost/asio.hpp>
 #include <thread>
 
@@ -13,7 +14,9 @@ namespace kdml {
     class Protocol {
 
         NodeInfo owner;
-        RoutingTree routingTree;
+        Network network;
+        RoutingTree routingTable;
+
 
         boost::asio::io_service ioService;
         std::unique_ptr<boost::asio::io_service::work> ioLock;
@@ -23,9 +26,9 @@ namespace kdml {
         std::thread ioThread;
         void startReceive();
 
-        void probePeers(std::vector<NodeInfo> endpoints, SimpleCallback onComplete);
+        void probePeers(Nodes& endpoints);
         boost::system::error_code populateBuf(boost::asio::streambuf& sb);
-        std::vector<NodeInfo> resolveEndpoint(const NodeInfo& ep);
+        Nodes resolveEndpoint(const NodeInfo& ep);
 
     public:
         explicit Protocol(const NodeInfo& owner);
@@ -38,6 +41,8 @@ namespace kdml {
 
         void handleReceive(const boost::system::error_code& error,
                            std::size_t /*bytes_transferred*/);
+
+        void refreshBuckets(RoutingTree::iterator startBucket);
     };
 }
 

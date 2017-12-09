@@ -8,8 +8,8 @@
 #include <node/nodeinfo.hpp>
 
 namespace kdml {
-    using GetResult = std::shared_ptr<kdml::NodeInfo>;
-    using GetCallback = std::function<bool(std::vector<GetResult>)>;
+    using Nodes = std::vector<NodeInfo>;
+    using GetCallback = std::function<void(Nodes)>;
     using SimpleCallback = std::function<void(bool failure)>;
 }
 
