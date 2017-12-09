@@ -2,38 +2,48 @@
 // Created by jestjest on 11/19/17.
 //
 
-#ifndef INC_244B_FINAL_PINGMESSAGE_HPP
-#define INC_244B_FINAL_PINGMESSAGE_HPP
+#ifndef SIMPLE_KADEMLIA_PINGMESSAGE_HPP
+#define SIMPLE_KADEMLIA_PINGMESSAGE_HPP
 
-#include "messages/message.hpp"
+#include "queryMessage.hpp"
 #include <cereal/types/polymorphic.hpp>
+#include <cereal/archives/binary.hpp>
 
 namespace kdml {
     namespace net {
 
-        class PingMessage : public Message {
-        public:
-            PingMessage(KademliaNodeInfo& src, KademliaNodeInfo& dest);
+        class PingMessage : public QueryMessage {
 
-            void print(std::ostream&) const override;
+        public:
+            PingMessage(std::array<unsigned char, 32> id, uint16_t tid)
+                    : QueryMessage(id, tid, QueryType::PING) {}
+
+            void print(std::ostream& os) const override {
+                boost::multiprecision::uint256_t idNum;
+                boost::multiprecision::import_bits(idNum, id.begin(), id.end());
+                os << "[" << mtype << "][" << qtype << "][TID="
+                   << tid << "][nodeID=" << idNum << "]" << std::endl;
+            }
 
             template<class Archive>
             void serialize(Archive& ar) {
-                ar(src, dest);
+                ar(cereal::base_class<QueryMessage>(this));
             }
 
             template<class Archive>
             static void load_and_construct(Archive& ar, cereal::construct<PingMessage>& construct) {
-                KademliaNodeInfo src;
-                KademliaNodeInfo dest;
-                ar(src, dest);
-                construct(src, dest);
+                std::array<unsigned char, 32> id;
+                uint16_t tid;
+                MessageType mtype;
+                QueryType qtype;
+
+                ar(tid, mtype, qtype, id);
+                construct(id, tid);
             }
         };
     }
 }
 
 CEREAL_REGISTER_TYPE(kdml::net::PingMessage);
-CEREAL_REGISTER_POLYMORPHIC_RELATION(kdml::net::Message, kdml::net::PingMessage);
 
-#endif //INC_244B_FINAL_PINGMESSAGE_HPP
+#endif //SIMPLE_KADEMLIA_PINGMESSAGE_HPP

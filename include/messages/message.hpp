@@ -2,33 +2,38 @@
 // Created by jestjest on 11/19/17.
 //
 
-#ifndef INC_244B_FINAL_MESSAGE_HPP
-#define INC_244B_FINAL_MESSAGE_HPP
+#ifndef SIMPLE_KADEMLIA_MESSAGE_HPP
+#define SIMPLE_KADEMLIA_MESSAGE_HPP
 
-#include "routing tree/kademlianodeinfo.hpp"
+
+#include "node/nodeinfo.hpp"
 #include "messages/messageType.hpp"
+#include <cereal/types/memory.hpp>
 
 namespace kdml {
     namespace net {
 
         class Message {
         protected:
-            MessageType type;
-            KademliaNodeInfo src;
-            KademliaNodeInfo dest;
+            uint16_t tid;
+            MessageType mtype;
         public:
-            Message(MessageType type,
-                    KademliaNodeInfo src, KademliaNodeInfo dest);
+            Message(uint16_t tid, MessageType type) : tid(tid), mtype(type) {}
 
-            MessageType getType() const;
+            MessageType getMessageType() const { return mtype; }
             virtual void print(std::ostream&) const = 0;
 
             friend std::ostream& operator<<(std::ostream& stream, Message& msg) {
                 msg.print(stream);
                 return stream;
             }
+
+            template <class Archive>
+            void serialize(Archive& ar) {
+                ar(tid, mtype);
+            }
         };
     }
 }
 
-#endif //INC_244B_FINAL_MESSAGE_HPP
+#endif //SIMPLE_KADEMLIA_MESSAGE_HPP

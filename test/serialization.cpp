@@ -5,25 +5,26 @@
 #define CATCH_CONFIG_MAIN
 #include "catch.hpp"
 
-#include <routing tree/kademlianodeinfo.hpp>
+#include <node/nodeinfo.hpp>
 #include <messages/message.hpp>
 #include <messages/pingMessage.hpp>
-#include "cereal/archives/binary.hpp"
+#include <node/kademlianode.hpp>
 
 
-TEST_CASE("Serialize-Deserialize") {
+TEST_CASE("cereal-serialize-deserialize", "[cereal]") {
+
+    using namespace kdml::net;
 
     std::stringstream ss;       // any stream can be used
-    std::shared_ptr<kdml::net::Message> before;
-    std::shared_ptr<kdml::net::Message> after;
+    std::shared_ptr<Message> before;
+    std::shared_ptr<Message> after;
 
     {
         cereal::BinaryOutputArchive oarchive(ss);     // create output archive
 
-        kdml::KademliaNodeInfo src = {"127.0.0.1", 8000, "1"};
-        kdml::KademliaNodeInfo dest = {"127.0.0.1", 8001, "2"};
+        kdml::NodeInfo src = {"192.168.0.1", 8000};
         // Create instances of the derived classes, but only keep base class pointers
-        before = std::make_shared<kdml::net::PingMessage>(src, dest);
+        before = std::make_shared<PingMessage>(src.id, 1);
         oarchive(before);     // write data to archive
     }   // archive going out of scope flushes content
 
@@ -35,6 +36,9 @@ TEST_CASE("Serialize-Deserialize") {
         iarchive(after);
     }
 
+    std::shared_ptr<PingMessage> beforePing = std::dynamic_pointer_cast<PingMessage>(before);
+    std::shared_ptr<PingMessage> afterPing = std::dynamic_pointer_cast<PingMessage>(before);
+
     ss.str("");
     ss << *before;
     std::string beforeStr = ss.str();
@@ -43,6 +47,11 @@ TEST_CASE("Serialize-Deserialize") {
     ss << *after;
     std::string afterStr = ss.str();
 
-    REQUIRE(static_cast<int>(before->getType()) == static_cast<int>(after->getType()));
+    REQUIRE(static_cast<int>(beforePing->getMessageType()) == static_cast<int>(afterPing->getMessageType()));
+    REQUIRE(static_cast<int>(beforePing->getQueryType()) == static_cast<int>(afterPing->getQueryType()));
     REQUIRE(beforeStr == afterStr);
+
+    std::cout << afterStr << std::endl;
 }
+
+
