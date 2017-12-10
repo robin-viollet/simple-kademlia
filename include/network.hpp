@@ -23,7 +23,7 @@ namespace kdml {
 
     public:
         Network(NodeInfo node, RoutingTree routingTable) {
-            this.owner = node;
+            this->owner = node;
             this->next_tid = 0;
         }
 

@@ -139,6 +139,13 @@ namespace kdml {
 //        }
     }
 
+    void lookup_node(boost::multiprecision::uint256_t key) {
+        std::vector<NodeInfo*> a_closest_nodes = routingTable.getAClosestNodes(a, key);
+        std::priority_queue
+        uint256_t distance = key ^ node_id;
+
+    }
+
     //todo: define RPC callbacks
 
 }

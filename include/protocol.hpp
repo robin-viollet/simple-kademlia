@@ -11,12 +11,14 @@
 
 namespace kdml {
 
+    // number of concurrent lookups in node lookup
+    const int a = 1;
+
     class Protocol {
 
         NodeInfo owner;
         Network network;
         RoutingTree routingTable;
-
 
         boost::asio::io_service ioService;
         std::unique_ptr<boost::asio::io_service::work> ioLock;
@@ -25,6 +27,10 @@ namespace kdml {
 
         std::thread ioThread;
         void startReceive();
+
+        //map of get/put request ids -> callback for get, put requests
+        //copy node lookup procedure passing pointer to heap allocated queue, request id
+        //
 
         void probePeers(Nodes& endpoints);
         boost::system::error_code populateBuf(boost::asio::streambuf& sb);
@@ -35,6 +41,8 @@ namespace kdml {
 
         void async_get(boost::multiprecision::uint256_t key, kdml::GetCallback callback);
 
+        void lookup_node(boost::multiprecision::uint256_t key);
+
         void bootstrap(const NodeInfo& peer);
 
         void join();
@@ -42,7 +50,6 @@ namespace kdml {
                            std::size_t /*bytes_transferred*/);
 
         void refreshBuckets(RoutingTree::iterator startBucket);
-
 
     };
 }

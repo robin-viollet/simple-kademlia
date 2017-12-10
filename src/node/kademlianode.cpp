@@ -30,5 +30,10 @@ namespace kdml {
         mp::import_bits(keyHash, hash.begin(), hash.end());
 
         protocol.async_get(keyHash, std::move(callback));
+
+    }
+
+    void KademliaNode::put(std::string key) {
+        //todo:  async_store
     }
 }

@@ -27,6 +27,9 @@ namespace kdml {
         // TODO Wrap key in class
         void get(std::string key, GetCallback callback);
 
+        // value is just serialized node info
+        void put(std::string key);
+
         void join();
     };
 }
