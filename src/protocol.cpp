@@ -4,8 +4,11 @@
 
 #include <boost/bind.hpp>
 #include <cereal/archives/binary.hpp>
+#include <messages/queryMessage.hpp>
+#include <messages/responseMessage.hpp>
+#include <messages/findQuery.hpp>
+#include <messages/storeQuery.hpp>
 #include "protocol.hpp"
-#include "messages/message.hpp"
 
 
 namespace kdml {
@@ -16,8 +19,8 @@ namespace kdml {
 
     Protocol::Protocol(const NodeInfo& node)
             : owner(node),
-              routingTable(),
-              network(node, routingTable),
+              routingTable(node.id),
+              network(node),
               ioService{},
               ioLock(new asio::io_service::work(ioService)),
               socket(ioService, udp::endpoint(udp::v4(), node.port)) {
@@ -38,7 +41,7 @@ namespace kdml {
 
     // TODO Asynchronous bootstrap (queue messages while bootstrapping).
     void Protocol::bootstrap(const NodeInfo& peer) {
-        std::vector<NodeInfo> endpoints = resolveEndpoint(peer);
+        Nodes endpoints = resolveEndpoint(peer);
         probePeers(endpoints);
     }
 
@@ -69,8 +72,8 @@ namespace kdml {
                 iarchive(message);
             }
 
-            std::cout << "Parsed message: " << *message.get() << std::endl;
-            // Now interpret the message.
+            std::cout << "Parsed message: " << *message << std::endl;
+            handleMessage(message);
         }
         startReceive();
     }
@@ -86,14 +89,15 @@ namespace kdml {
                 if (failure) {
                     probePeers(endpoints);
                 } else {
-                    auto bucket = routingTable.insert(ep);
-                    network.sendFindNode(owner.id, ep, [bucket](Nodes& found){
+                    NodeInfo* endpoint = new NodeInfo(ep);
+                    auto bucket = routingTable.insertNode(endpoint);
+                    doLookUp(owner.id, [bucket](Nodes& found) {
                         refreshBuckets(bucket);
                     });
                 }
             };
 
-            network.sendPing(ep, onPong);
+            network.send_ping(ep, onPong);
         }
     }
 
@@ -113,30 +117,44 @@ namespace kdml {
         return recvError;
     }
 
-    std::vector<NodeInfo> Protocol::resolveEndpoint(const NodeInfo& ep) {
+    Nodes Protocol::resolveEndpoint(const NodeInfo& ep) {
         udp::resolver resolver(ioService);
-        udp::resolver::query query(udp::v4(), ep.getIpAddr(), std::to_string(ep.port));
-        std::vector<NodeInfo> endpoints;
+        udp::resolver::query query(udp::v4(),
+                                   ep.getIpAddr(), std::to_string(ep.port));
+        Nodes endpoints;
         auto resolvedEndpoints = resolver.resolve(query);
         decltype(resolvedEndpoints) end;
 
         while (resolvedEndpoints != end) {
-            auto endpoint = (*resolvedEndpoints).endpoint();
-            endpoints.emplace_back(endpoint.address().to_string(),
-                                   endpoint.port());
+            auto ep = (*resolvedEndpoints).endpoint();
+            endpoints.emplace_back({ep.address().to_string(), ep.port()});
             resolvedEndpoints++;
         }
         return endpoints;
     }
 
     void Protocol::refreshBuckets(RoutingTree::iterator start) {
-//        for (; start != routingTable::end(); start++) {
-//            Id randomId = routingTable.getRandomId(start);
-//            Nodes
-//            network.sendFindNode(owner.id, , [bucket](Nodes& found){
-//                refreshBuckets(bucket);
-//            });
-//        }
+        for (; start != routingTable.end(); start++) {
+            mp::uint256_t randomId = routingTable.randomId(start);
+            doLookUp(randomId, [](...){});
+        }
+    }
+
+    void Protocol::handleMessage(std::shared_ptr<net::Message> msg) {
+        switch (msg->getMessageType()) {
+            case net::MessageType::ERROR: {
+                std::cerr << "Received error message: " << *msg << std::endl;
+                break;
+            }
+            case net::MessageType::QUERY: {
+                handleQueryMessage(std::dynamic_pointer_cast<net::QueryMessage>(msg));
+                break;
+            }
+            case net::MessageType::RESPONSE: {
+                handleResponseMessage(msg);
+                break;
+            }
+        }
     }
 
     void lookup_node(boost::multiprecision::uint256_t key) {
@@ -148,4 +166,63 @@ namespace kdml {
 
     //todo: define RPC callbacks
 
+    void Protocol::handleQueryMessage(std::shared_ptr<net::QueryMessage> msg) {
+        NodeInfo* peer = new NodeInfo(remote.address().to_string(), remote.port());
+        routingTable.insertNode(peer);
+
+        switch (msg->getQueryType()) {
+            case net::QueryType::PING: {
+                network.send_ping_response(*peer, msg->getTid());
+                break;
+            }
+            case net::QueryType::FIND_NODE: {
+                auto query = std::dynamic_pointer_cast<net::FindQuery>(msg);
+                auto nodes = routingTable.getKClosestNodes(query->getTarget());
+                Nodes result;
+                std::transform(nodes.begin(), nodes.end(), result.begin(),
+                               [](NodeInfo* node) {
+                                   return *node;
+                               });
+
+                network.send_find_node_response(*peer, result, msg->getTid());
+                break;
+            }
+            case net::QueryType::FIND_VALUE: {
+                auto query = std::dynamic_pointer_cast<net::FindQuery>(msg);
+                auto found = storage.find(query->getTarget());
+                Nodes result;
+                if (found != storage.end()) {
+                    result = found->second;
+                } else {
+                    auto nodes = routingTable.getKClosestNodes(query->getTarget());
+                    std::transform(nodes.begin(), nodes.end(), result.begin(),
+                                   [](NodeInfo* node) {
+                                       return *node;
+                                   });
+                }
+                network.send_find_value_response(*peer, found != storage.end(),
+                                                 result, msg->getTid());
+                break;
+            }
+            case net::QueryType::STORE: {
+                auto query = std::dynamic_pointer_cast<net::StoreQuery>(msg);
+                bool success = false;
+                try {
+                    storage[query->getKey()].emplace_back(query->getVal());
+                    success = true;
+                } catch (...) {}
+                network.send_store_response(*peer, success, msg->getTid());
+                break;
+            }
+        }
+    }
+
+    void Protocol::handleResponseMessage(std::shared_ptr<net::Message> msg) {
+        if (!network.containsReq(msg->getTid())) {
+            std::cerr << "Received alien message" << *msg << std::endl;
+        } else {
+            Request outstanding = network.getReq(msg->getTid());
+            outstanding.onDone(msg);
+        }
+    }
 }

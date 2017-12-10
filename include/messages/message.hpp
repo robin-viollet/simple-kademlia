@@ -13,14 +13,17 @@
 namespace kdml {
     namespace net {
 
+        namespace mp = boost::multiprecision;
+
         class Message {
         protected:
-            uint16_t tid;
+            uint32_t tid;
             MessageType mtype;
         public:
-            Message(uint16_t tid, MessageType type) : tid(tid), mtype(type) {}
+            Message(uint32_t tid, MessageType type) : tid(tid), mtype(type) {}
 
             MessageType getMessageType() const { return mtype; }
+            uint32_t getTid() const { return tid; }
 
             virtual void print(std::ostream&) const = 0;
 

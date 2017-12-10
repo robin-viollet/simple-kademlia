@@ -7,7 +7,7 @@
 #include <cereal/archives/binary.hpp>
 #include <cereal/archives/json.hpp>
 #include <messages/message.hpp>
-#include <messages/pingMessage.hpp>
+#include <messages/pingQuery.hpp>
 #include <node/kademlianode.hpp>
 
 using namespace kdml::net;
@@ -16,7 +16,7 @@ using boost::asio::ip::udp;
 std::shared_ptr<Message> makePing(const std::string& fromAddr,
                                   unsigned short fromPort) {
     kdml::NodeInfo src = {fromAddr, fromPort};
-    return std::make_shared<PingMessage>(src.id, 1337);
+    return std::make_shared<PingQuery>(src.id, 1337);
 }
 
 TEST_CASE("messaging-send ping", "[messaging]") {

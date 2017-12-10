@@ -8,22 +8,24 @@
 #define SIMPLE_KADEMLIA_KBUCKET_HPP
 
 #include <list>
+#include <utility>
 #include "node/nodeinfo.hpp"
 
 namespace kdml {
 
+    namespace mp = boost::multiprecision;
     const int k = 20;
 
     class kBucket {
 
         std::list<NodeInfo*> contacts;
-        uint256_t prefix;
+        mp::uint256_t prefix;
         uint16_t tree_level;
 
     public:
 
-        kBucket(uint256_t prefix, uint16_t tree_level) {
-            this->prefix = prefix;
+        kBucket(mp::uint256_t prefix, uint16_t tree_level) {
+            this->prefix = std::move(prefix);
             this->tree_level = tree_level;
         }
 
@@ -36,18 +38,18 @@ namespace kdml {
         }
 
         // Checks if first tree_level bits of prefix and node_id are the same
-        bool rangeContainsId(uint256_t node_id) {
-            return (prefix >> 256 - tree_level) ^ (node_id >> 256 - tree_level) == 0;
+        bool rangeContainsId(const mp::uint256_t &node_id) {
+            return ((prefix >> 256 - tree_level) ^ (node_id >> 256 - tree_level)) == 0;
         }
 
         // Iterates over node info list and
         void splitNodes(kBucket *new_bucket) {
-            std::list<item*>::iterator i = contacts.begin();
+            auto i = contacts.begin();
             while (i != contacts.end()) {
                 NodeInfo *node = *i;
-                if (new_bucket->rangeContainsId(node->node_id)) {
+                if (new_bucket->rangeContainsId(node->id)) {
                     new_bucket->insertNode(node);
-                    i = items.erase(i);
+                    i = contacts.erase(i);
                 } else {
                     i++;
                 }
@@ -59,8 +61,8 @@ namespace kdml {
         // todo: check if tree level is max (probably won't happen)
         kBucket *split() {
             tree_level++;
-            uint256_t new_prefix = prefix | (1 << 256 - tree_level);
-            kBucket *new_bucket = new kBucket(new_prefix, tree_level);
+            mp::uint256_t new_prefix = prefix | (1 << 256 - tree_level);
+            auto *new_bucket = new kBucket(new_prefix, tree_level);
             splitNodes(new_bucket);
             return new_bucket;
         }
@@ -70,7 +72,7 @@ namespace kdml {
         // Returns how many nodes added.
         int getNodes(std::vector<NodeInfo*>& nodes, int num_nodes) {
             int num_added = 0;
-            std::list<item*>::iterator i = contacts.begin();
+            auto i = contacts.begin();
             for (i; i != contacts.end() && num_added < num_nodes; i++) {
                 NodeInfo *node = *i;
                 nodes.push_back(node);
