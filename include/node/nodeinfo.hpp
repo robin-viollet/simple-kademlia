@@ -12,20 +12,19 @@
 
 #include <ostream>
 #include <boost/multiprecision/cpp_int.hpp>
-#include <cereal/types/array.hpp>
+#include <cereal/types/vector.hpp>
 #include <aux/picosha2.hpp>
 #include <arpa/inet.h>
 
 namespace kdml {
 
     namespace mp = boost::multiprecision;
-    using Id = std::array<unsigned char, 32>;
 
     struct NodeInfo {
 
         unsigned long ipAddr{};
         unsigned short port{0};
-        uint256_t id{};
+        mp::uint256_t id{};
 
         NodeInfo() = default;
 
@@ -33,27 +32,29 @@ namespace kdml {
                 : port(p) {
 
             inet_pton(AF_INET, ip.c_str(), &ipAddr);
-            picosha2::hash256(ip.begin(), ip.end(), id.begin(), id.end());
-            mp::import_bits(idNum, id.begin(), id.end());
+            std::vector<unsigned char> hash(32);
+            picosha2::hash256(ip.begin(), ip.end(), hash.begin(), hash.end());
+            mp::import_bits(id, hash.begin(), hash.end());
         }
 
         template<class Archive>
         void save(Archive& ar) const {
-            ar(ipAddr, port, id);
+            std::vector<unsigned char> idVec(32);
+            mp::export_bits(id, std::back_inserter(idVec), 8);
+            ar(ipAddr, port, idVec);
         }
 
         template<class Archive>
         void load(Archive& ar) {
-            ar(ipAddr, port, id);
-            mp::import_bits(idNum, id.begin(), id.end());
+            std::vector<unsigned char> idVec(32);
+            ar(ipAddr, port, idVec);
+            mp::import_bits(id, idVec.begin(), idVec.end());
         }
 
         friend std::ostream& operator<<(std::ostream& os, const NodeInfo& node) {
-            char str[INET_ADDRSTRLEN];
-
-            os << "[id: " << node.idNum
+            os << "(id: " << node.id
                << ", IP: " << node.getIpAddr()
-               << ":" << node.port << "]" << std::endl;
+               << ":" << node.port << ")";
             return os;
         }
 

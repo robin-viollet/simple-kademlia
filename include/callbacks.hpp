@@ -6,10 +6,11 @@
 #define SIMPLE_KADEMLIA_CALLBACKS_HPP
 
 #include <node/nodeinfo.hpp>
+#include <messages/message.hpp>
 
 namespace kdml {
+    using rpc_callback = std::function<void(std::shared_ptr<net::Message> req)>;
     using Nodes = std::vector<NodeInfo>;
-    using rpc_callback = std::function<void(std::shared_ptr<kdml::net::Message> req)>;
     using GetCallback = std::function<void(Nodes)>;
     using SimpleCallback = std::function<void(bool failure)>;
     //todo: findvalue callback returns either list of nodes or value

@@ -7,7 +7,7 @@
 #include <cereal/archives/binary.hpp>
 #include <cereal/archives/json.hpp>
 #include <messages/message.hpp>
-#include <messages/pingMessage.hpp>
+#include <messages/pingQuery.hpp>
 #include <node/kademlianode.hpp>
 
 using namespace kdml::net;

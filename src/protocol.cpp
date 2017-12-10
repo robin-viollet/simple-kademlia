@@ -4,8 +4,9 @@
 
 #include <boost/bind.hpp>
 #include <cereal/archives/binary.hpp>
+#include <messages/queryMessage.hpp>
+#include <messages/responseMessage.hpp>
 #include "protocol.hpp"
-#include "messages/message.hpp"
 
 
 namespace kdml {
@@ -16,8 +17,8 @@ namespace kdml {
 
     Protocol::Protocol(const NodeInfo& node)
             : owner(node),
-              routingTable(),
-              network(node, routingTable),
+              routingTable(node.id),
+              network(node),
               ioService{},
               ioLock(new asio::io_service::work(ioService)),
               socket(ioService, udp::endpoint(udp::v4(), node.port)) {
@@ -38,7 +39,7 @@ namespace kdml {
 
     // TODO Asynchronous bootstrap (queue messages while bootstrapping).
     void Protocol::bootstrap(const NodeInfo& peer) {
-        std::vector<NodeInfo> endpoints = resolveEndpoint(peer);
+        Nodes endpoints = resolveEndpoint(peer);
         probePeers(endpoints);
     }
 
@@ -69,8 +70,8 @@ namespace kdml {
                 iarchive(message);
             }
 
-            std::cout << "Parsed message: " << *message.get() << std::endl;
-            // Now interpret the message.
+            std::cout << "Parsed message: " << *message << std::endl;
+            handleMessage(message);
         }
         startReceive();
     }
@@ -86,8 +87,9 @@ namespace kdml {
                 if (failure) {
                     probePeers(endpoints);
                 } else {
-                    auto bucket = routingTable.insert(ep);
-                    network.sendFindNode(owner.id, ep, [bucket](Nodes& found){
+                    NodeInfo* endpoint = new NodeInfo(ep);
+                    auto bucket = routingTable.insertNode(endpoint);
+                    doLookUp(owner.id, [bucket](Nodes& found) {
                         refreshBuckets(bucket);
                     });
                 }
@@ -113,32 +115,68 @@ namespace kdml {
         return recvError;
     }
 
-    std::vector<NodeInfo> Protocol::resolveEndpoint(const NodeInfo& ep) {
+    Nodes Protocol::resolveEndpoint(const NodeInfo& ep) {
         udp::resolver resolver(ioService);
-        udp::resolver::query query(udp::v4(), ep.getIpAddr(), std::to_string(ep.port));
-        std::vector<NodeInfo> endpoints;
+        udp::resolver::query query(udp::v4(),
+                                   ep.getIpAddr(), std::to_string(ep.port));
+        Nodes endpoints;
         auto resolvedEndpoints = resolver.resolve(query);
         decltype(resolvedEndpoints) end;
 
         while (resolvedEndpoints != end) {
-            auto endpoint = (*resolvedEndpoints).endpoint();
-            endpoints.emplace_back(endpoint.address().to_string(),
-                                   endpoint.port());
+            auto ep = (*resolvedEndpoints).endpoint();
+            endpoints.emplace_back({ep.address().to_string(), ep.port()});
             resolvedEndpoints++;
         }
         return endpoints;
     }
 
     void Protocol::refreshBuckets(RoutingTree::iterator start) {
-//        for (; start != routingTable::end(); start++) {
-//            Id randomId = routingTable.getRandomId(start);
-//            Nodes
-//            network.sendFindNode(owner.id, , [bucket](Nodes& found){
-//                refreshBuckets(bucket);
-//            });
-//        }
+        for (; start != routingTable.end(); start++) {
+            mp::uint256_t randomId = routingTable.randomId(start);
+            doLookUp(randomId, [](...){});
+        }
     }
 
-    //todo: define RPC callbacks
+    void Protocol::handleMessage(std::shared_ptr<net::Message> msg) {
+        switch(msg->getMessageType()) {
+            case net::MessageType::ERROR: {
+                std::cerr << "Received error message: " << *msg << std::endl;
+                break;
+            }
+            case net::MessageType::QUERY: {
+                handleQueryMessage(std::dynamic_pointer_cast<net::QueryMessage>(msg));
+                break;
+            }
+            case net::MessageType::RESPONSE: {
+                handleResponseMessage(std::dynamic_pointer_cast<net::ResponseMessage>(msg));
+                break;
+            }
+        }
+    }
 
+    void Protocol::handleQueryMessage(std::shared_ptr<net::QueryMessage> msg) {
+
+    }
+
+    void Protocol::handleResponseMessage(std::shared_ptr<net::ResponseMessage> msg) {
+
+    }
+
+    /* msg type: query
+     * switch queryType
+     * ping: add to RoutingTable, send ping back
+     * find_node: return findClosestNodes
+     * find_value: if id exists in hashmap return v, else return findClosestNodes
+     * store: store k,v in hashmap?
+     *
+     * msg type: response
+     * check in network requests for outstanding matching request
+     * if none, output alien
+     * if exists, call callback
+     *
+     * msg type: error
+     *
+     */
+    }
 }

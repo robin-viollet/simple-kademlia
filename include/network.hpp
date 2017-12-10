@@ -9,7 +9,7 @@
 #include "node/nodeinfo.hpp"
 #include "request.hpp"
 #include "callbacks.hpp"
-#include "routingtree.hpp"
+#include "routing tree/routingtree.hpp"
 
 namespace kdml {
     class Network {
@@ -22,8 +22,8 @@ namespace kdml {
         void send_RPC();
 
     public:
-        Network(NodeInfo node, RoutingTree routingTable) {
-            this.owner = node;
+        Network(NodeInfo node) {
+            this->owner = node;
             this->next_tid = 0;
         }
 

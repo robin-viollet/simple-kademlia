@@ -2,8 +2,8 @@
 // Created by jestjest on 12/2/17.
 //
 
-#ifndef SIMPLE_KADEMLIA_QUERYMESSAGE_HPP
-#define SIMPLE_KADEMLIA_QUERYMESSAGE_HPP
+#ifndef SIMPLE_KADEMLIA_RESPONSEMESSAGE_HPP
+#define SIMPLE_KADEMLIA_RESPONSEMESSAGE_HPP
 
 #include "message.hpp"
 
@@ -11,15 +11,16 @@
 namespace kdml {
     namespace net {
 
-        class QueryMessage : public Message {
+        class ResponseMessage : public Message {
         protected:
             mp::uint256_t id{};
             QueryType qtype{};
         public:
-            explicit QueryMessage(mp::uint256_t id, uint32_t tid,
-                                  QueryType type)
-                    : Message(tid, MessageType::QUERY),
-                      id(std::move(id)), qtype(type) {}
+            explicit ResponseMessage(mp::uint256_t id, uint32_t tid,
+                                     QueryType type)
+                    : Message(tid, MessageType::RESPONSE),
+                      id(std::move(id)),qtype(type){}
+
 
             QueryType getQueryType() const { return qtype; }
 
@@ -41,4 +42,4 @@ namespace kdml {
     }
 }
 
-#endif //SIMPLE_KADEMLIA_QUERYMESSAGE_HPP
+#endif //SIMPLE_KADEMLIA_RESPONSEMESSAGE_HPP

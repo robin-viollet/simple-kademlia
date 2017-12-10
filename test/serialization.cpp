@@ -7,7 +7,7 @@
 
 #include <node/nodeinfo.hpp>
 #include <messages/message.hpp>
-#include <messages/pingMessage.hpp>
+#include <messages/pingQuery.hpp>
 #include <node/kademlianode.hpp>
 
 
@@ -24,7 +24,7 @@ TEST_CASE("cereal-serialize-deserialize", "[cereal]") {
 
         kdml::NodeInfo src = {"192.168.0.1", 8000};
         // Create instances of the derived classes, but only keep base class pointers
-        before = std::make_shared<PingMessage>(src.id, 1);
+        before = std::make_shared<PingQuery>(src.id, 1);
         oarchive(before);     // write data to archive
     }   // archive going out of scope flushes content
 
@@ -36,8 +36,8 @@ TEST_CASE("cereal-serialize-deserialize", "[cereal]") {
         iarchive(after);
     }
 
-    std::shared_ptr<PingMessage> beforePing = std::dynamic_pointer_cast<PingMessage>(before);
-    std::shared_ptr<PingMessage> afterPing = std::dynamic_pointer_cast<PingMessage>(before);
+    std::shared_ptr<PingQuery> beforePing = std::dynamic_pointer_cast<PingQuery>(before);
+    std::shared_ptr<PingQuery> afterPing = std::dynamic_pointer_cast<PingQuery>(before);
 
     ss.str("");
     ss << *before;
