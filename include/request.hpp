@@ -19,9 +19,9 @@ namespace kdml {
         std::function<void(std::shared_ptr<kdml::net::Message> req)> onDone;
 
         Request(NodeInfo dest, uint32_t tid, std::function<void(std::shared_ptr<kdml::net::Message> req)> onDone) {
-            this.dest = dest;
-            this.tid = tid;
-            this.onDone = onDone;
+            this->dest = dest;
+            this->tid = tid;
+            this->onDone = onDone;
         }
     };
 }

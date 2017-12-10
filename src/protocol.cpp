@@ -6,6 +6,8 @@
 #include <cereal/archives/binary.hpp>
 #include <messages/queryMessage.hpp>
 #include <messages/responseMessage.hpp>
+#include <messages/findQuery.hpp>
+#include <messages/storeQuery.hpp>
 #include "protocol.hpp"
 
 
@@ -95,7 +97,7 @@ namespace kdml {
                 }
             };
 
-            network.sendPing(ep, onPong);
+            network.send_ping(ep, onPong);
         }
     }
 
@@ -139,7 +141,7 @@ namespace kdml {
     }
 
     void Protocol::handleMessage(std::shared_ptr<net::Message> msg) {
-        switch(msg->getMessageType()) {
+        switch (msg->getMessageType()) {
             case net::MessageType::ERROR: {
                 std::cerr << "Received error message: " << *msg << std::endl;
                 break;
@@ -149,34 +151,69 @@ namespace kdml {
                 break;
             }
             case net::MessageType::RESPONSE: {
-                handleResponseMessage(std::dynamic_pointer_cast<net::ResponseMessage>(msg));
+                handleResponseMessage(msg);
                 break;
             }
         }
     }
 
     void Protocol::handleQueryMessage(std::shared_ptr<net::QueryMessage> msg) {
+        NodeInfo* peer = new NodeInfo(remote.address().to_string(), remote.port());
+        routingTable.insertNode(peer);
 
+        switch (msg->getQueryType()) {
+            case net::QueryType::PING: {
+                network.send_ping_response(*peer, msg->getTid());
+                break;
+            }
+            case net::QueryType::FIND_NODE: {
+                auto query = std::dynamic_pointer_cast<net::FindQuery>(msg);
+                auto nodes = routingTable.getKClosestNodes(query->getTarget());
+                Nodes result;
+                std::transform(nodes.begin(), nodes.end(), result.begin(),
+                               [](NodeInfo* node) {
+                                   return *node;
+                               });
+
+                network.send_find_node_response(*peer, result, msg->getTid());
+                break;
+            }
+            case net::QueryType::FIND_VALUE: {
+                auto query = std::dynamic_pointer_cast<net::FindQuery>(msg);
+                auto found = storage.find(query->getTarget());
+                Nodes result;
+                if (found != storage.end()) {
+                    result = found->second;
+                } else {
+                    auto nodes = routingTable.getKClosestNodes(query->getTarget());
+                    std::transform(nodes.begin(), nodes.end(), result.begin(),
+                                   [](NodeInfo* node) {
+                                       return *node;
+                                   });
+                }
+                network.send_find_value_response(*peer, found != storage.end(),
+                                                 result, msg->getTid());
+                break;
+            }
+            case net::QueryType::STORE: {
+                auto query = std::dynamic_pointer_cast<net::StoreQuery>(msg);
+                bool success = false;
+                try {
+                    storage[query->getKey()].emplace_back(query->getVal());
+                    success = true;
+                } catch (...) {}
+                network.send_store_response(*peer, success, msg->getTid());
+                break;
+            }
+        }
     }
 
-    void Protocol::handleResponseMessage(std::shared_ptr<net::ResponseMessage> msg) {
-
-    }
-
-    /* msg type: query
-     * switch queryType
-     * ping: add to RoutingTable, send ping back
-     * find_node: return findClosestNodes
-     * find_value: if id exists in hashmap return v, else return findClosestNodes
-     * store: store k,v in hashmap?
-     *
-     * msg type: response
-     * check in network requests for outstanding matching request
-     * if none, output alien
-     * if exists, call callback
-     *
-     * msg type: error
-     *
-     */
+    void Protocol::handleResponseMessage(std::shared_ptr<net::Message> msg) {
+        if (!network.containsReq(msg->getTid())) {
+            std::cerr << "Received alien message" << *msg << std::endl;
+        } else {
+            Request outstanding = network.getReq(msg->getTid());
+            outstanding.onDone(msg);
+        }
     }
 }

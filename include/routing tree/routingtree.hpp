@@ -16,6 +16,9 @@
 
 
 namespace kdml {
+
+    namespace mp = boost::multiprecision;
+
     struct RoutingTreeNode {
         kBucket *bucket;
         RoutingTreeNode *zero;
@@ -33,37 +36,38 @@ namespace kdml {
     };
 
     class RoutingTree {
-        RoutingTreeNode *root;
-        uint256_t m_node_id;
 
-        RoutingTreeNode *getTreeNode(RoutingTreeNode *treeNode, uint256_t node_id, uint16_t bit_index) {
+        RoutingTreeNode *root;
+        mp::uint256_t m_node_id;
+
+        RoutingTreeNode *getTreeNode(RoutingTreeNode *treeNode, mp::uint256_t node_id, uint16_t bit_index) {
             if (treeNode -> isLeaf) return treeNode;
-            uint256_t branch = node_id & (1 << bit_index);
+            mp::uint256_t branch = node_id & (1 << bit_index);
             if (branch) {
                 return getTreeNode(treeNode->one, node_id, bit_index-1);
             }
             return getTreeNode(treeNode->zero, node_id, bit_index-1);
         }
 
-        RoutingTreeNode *getTreeNode(uint256_t node_id) {
+        RoutingTreeNode *getTreeNode(mp::uint256_t node_id) {
             return getTreeNode(root, node_id, 255);
         }
 
-        int getClosestNodes(std::vector<NodeInfo*>& nodes, int desired_num, int num, uint256_t key,
+        int getClosestNodes(std::vector<NodeInfo*>& nodes, int desired_num, int num, mp::uint256_t key,
                              RoutingTreeNode *treeNode, uint16_t bit_index) {
 
             if (num == desired_num) return num;
             if (treeNode -> isLeaf) {
                 kBucket *bucket = treeNode->bucket;
                 assert(bucket != NULL);
-                num += bucket->getNodes(closest, desired_num-num);
+                num += bucket->getNodes(nodes, desired_num-num);
                 return num;
             }
 
             // First get values from correct branch, if not enough get next closest values from other branch
             RoutingTreeNode *first = treeNode->zero;
             RoutingTreeNode *second = treeNode->one;
-            uint256_t branch = key & (1 << bit_index);
+            mp::uint256_t branch = key & (1 << bit_index);
             if (branch) {
                 first = treeNode->one;
                 second = treeNode->zero;
@@ -75,7 +79,7 @@ namespace kdml {
             return num;
         }
 
-        std::vector<NodeInfo*> getClosestNodes(int num, uint256_t key) {
+        std::vector<NodeInfo*> getClosestNodes(int num, mp::uint256_t key) {
             std::vector<NodeInfo*> closest;
             getClosestNodes(closest, num, 0, key, root, 255);
             return closest;
@@ -83,24 +87,24 @@ namespace kdml {
 
     public:
 
-        RoutingTree(uint256_t node_id) {
+        RoutingTree(mp::uint256_t node_id) {
             m_node_id = node_id;
             root = new RoutingTreeNode(new kBucket(0, 0), NULL);
         }
 
         // Return k nodes from tree node, and if not enough keep getting more from parent
         // Unless < k in whole tree in which case returns all nodes it knows about
-        std::vector<NodeInfo*> getKClosestNodes(uint256_t key) {
+        std::vector<NodeInfo*> getKClosestNodes(mp::uint256_t key) {
             //todo: make k in kbucket global config?
             return getClosestNodes(k, key);
         }
 
-        std::vector<NodeInfo*> getAClosestNodes(int a, uint256_t key) {
+        std::vector<NodeInfo*> getAClosestNodes(int a, mp::uint256_t key) {
             return getClosestNodes(a, key);
         }
 
         bool insertNode(NodeInfo *node) {
-            uint256_t node_id = node->node_id;
+            mp::uint256_t node_id = node->id;
             RoutingTreeNode *treeNode = getTreeNode(node_id);
             kBucket *bucket = treeNode->bucket;
             bool success = bucket->insertNode(node);

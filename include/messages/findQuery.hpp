@@ -2,8 +2,8 @@
 // Created by jestjest on 11/19/17.
 //
 
-#ifndef SIMPLE_KADEMLIA_FINDNODEQUERY_HPP
-#define SIMPLE_KADEMLIA_FINDNODEQUERY_HPP
+#ifndef SIMPLE_KADEMLIA_FINDQUERY_HPP
+#define SIMPLE_KADEMLIA_FINDQUERY_HPP
 
 #include "queryMessage.hpp"
 #include <cereal/types/polymorphic.hpp>
@@ -13,19 +13,24 @@
 namespace kdml {
     namespace net {
 
-        class FindNodeQuery : public QueryMessage {
+        class FindQuery : public QueryMessage {
         protected:
             mp::uint256_t targetId;
         public:
-            FindNodeQuery(mp::uint256_t id, uint32_t tid, mp::uint256_t target)
-                    : QueryMessage(std::move(id), tid, QueryType::FIND_NODE),
-                      targetId(std::move(target)) {}
+            FindQuery(mp::uint256_t id, uint32_t tid, mp::uint256_t target,
+                      QueryType qtype)
+                    : QueryMessage(std::move(id), tid, qtype),
+                      targetId(std::move(target)) {
+                assert(qtype == QueryType::FIND_VALUE || qtype == QueryType::FIND_NODE);
+            }
 
             void print(std::ostream& os) const override {
                 os << "[" << mtype << "][" << qtype << "][TID="
                    << tid << "][queryingID=" << id << "][target="
                    << targetId << "]";
             }
+
+            mp::uint256_t getTarget() { return targetId; }
 
             template<class Archive>
             void save(Archive& ar) {
@@ -42,7 +47,7 @@ namespace kdml {
             }
 
             template<class Archive>
-            static void load_and_construct(Archive& ar, cereal::construct<FindNodeQuery>& construct) {
+            static void load_and_construct(Archive& ar, cereal::construct<FindQuery>& construct) {
                 uint32_t tid{};
                 MessageType mtype{};
                 QueryType qtype{};
@@ -54,12 +59,12 @@ namespace kdml {
                 ar(tid, mtype, qtype, idVec, targetVec);
                 mp::import_bits(id, idVec.begin(), idVec.end());
                 mp::import_bits(target, targetVec.begin(), targetVec.end());
-                construct(id, tid, target);
+                construct(id, tid, target, qtype);
             }
         };
     }
 }
 
-CEREAL_REGISTER_TYPE(kdml::net::FindNodeQuery);
+CEREAL_REGISTER_TYPE(kdml::net::FindQuery);
 
-#endif //SIMPLE_KADEMLIA_FINDNODEQUERY_HPP
+#endif //SIMPLE_KADEMLIA_FINDQUERY_HPP

@@ -23,6 +23,7 @@ namespace kdml {
             Message(uint32_t tid, MessageType type) : tid(tid), mtype(type) {}
 
             MessageType getMessageType() const { return mtype; }
+            uint32_t getTid() const { return tid; }
 
             virtual void print(std::ostream&) const = 0;
 

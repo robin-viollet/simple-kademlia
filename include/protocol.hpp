@@ -8,6 +8,7 @@
 #include <boost/asio.hpp>
 #include <thread>
 #include <messages/responseMessage.hpp>
+#include <messages/queryMessage.hpp>
 
 
 namespace kdml {
@@ -17,6 +18,7 @@ namespace kdml {
         NodeInfo owner;
         Network network;
         RoutingTree routingTable;
+        std::map<boost::multiprecision::uint256_t, Nodes> storage;
 
         boost::asio::io_service ioService;
         std::unique_ptr<boost::asio::io_service::work> ioLock;
@@ -30,7 +32,7 @@ namespace kdml {
                            std::size_t /*bytes_transferred*/);
         void handleMessage(std::shared_ptr<net::Message> msg);
         void handleQueryMessage(std::shared_ptr<net::QueryMessage> msg);
-        void handleResponseMessage(std::shared_ptr<net::ResponseMessage> msg);
+        void handleResponseMessage(std::shared_ptr<net::Message> msg);
 
         void probePeers(Nodes& endpoints);
         boost::system::error_code populateBuf(boost::asio::streambuf& sb);
