@@ -20,20 +20,15 @@ namespace kdml {
         kBucket *bucket;
         RoutingTreeNode *zero;
         RoutingTreeNode *one;
-        RoutingTreeNode *parent;
+        RoutingTreeNode *parent; //todo: delete parent?
+        bool isLeaf; //if bucket != NULL
 
         RoutingTreeNode(kBucket *bucket, RoutingTreeNode *parent) {
-            this.bucket = bucket;
-            this.parent = parent;
-            this.zero = NULL;
-            this.one = NULL;
-        };
-
-        RoutingTreeNode(kBucket *bucket,
-                        RoutingTreeNode *zero, RoutingTreeNode *one) {
-            this.bucket = bucket;
-            this.zero = zero;
-            this.one = one;
+            this->bucket = bucket;
+            this->parent = parent;
+            this->zero = NULL;
+            this->one = NULL;
+            this->isLeaf = true;
         };
     };
 
@@ -42,12 +37,11 @@ namespace kdml {
         uint256_t m_node_id;
 
         RoutingTreeNode *getTreeNode(RoutingTreeNode *treeNode, uint256_t node_id, uint16_t bit_index) {
+            if (treeNode -> isLeaf) return treeNode;
             uint256_t branch = node_id & (1 << bit_index);
             if (branch) {
-                if (treeNode->one == NULL) return treeNode;
                 return getTreeNode(treeNode->one, node_id, bit_index-1);
             }
-            if (treeNode->zero == NULL) return treeNode;
             return getTreeNode(treeNode->zero, node_id, bit_index-1);
         }
 
@@ -55,16 +49,35 @@ namespace kdml {
             return getTreeNode(root, node_id, 255);
         }
 
-        std::vector<NodeInfo*> getClosestNodes(int num, uint256_t key) {
-            std::vector<NodeInfo*> closest;
-            RoutingTreeNode *treeNode = getTreeNode(key);
-            int num_nodes = 0;
-            while (num_nodes < num && treeNode != NULL) {
+        int getClosestNodes(std::vector<NodeInfo*>& nodes, int desired_num, int num, uint256_t key,
+                             RoutingTreeNode *treeNode, uint16_t bit_index) {
+
+            if (num == desired_num) return num;
+            if (treeNode -> isLeaf) {
                 kBucket *bucket = treeNode->bucket;
-                num_nodes += bucket->getNodes(closest, num-num_nodes);
-                treeNode = treeNode->parent;
+                assert(bucket != NULL);
+                num += bucket->getNodes(closest, desired_num-num);
+                return num;
             }
 
+            // First get values from correct branch, if not enough get next closest values from other branch
+            RoutingTreeNode *first = treeNode->zero;
+            RoutingTreeNode *second = treeNode->one;
+            uint256_t branch = key & (1 << bit_index);
+            if (branch) {
+                first = treeNode->one;
+                second = treeNode->zero;
+            }
+
+            num += getClosestNodes(nodes, desired_num, num, key, first, bit_index-1);
+            num += getClosestNodes(nodes, desired_num, num, key, second, bit_index-1);
+
+            return num;
+        }
+
+        std::vector<NodeInfo*> getClosestNodes(int num, uint256_t key) {
+            std::vector<NodeInfo*> closest;
+            getClosestNodes(closest, num, 0, key, root, 255);
             return closest;
         }
 
@@ -103,6 +116,7 @@ namespace kdml {
                 treeNode->zero = zeroTreeNode;
                 treeNode->one = oneTreeNode;
                 treeNode->bucket = NULL;
+                treeNode->isLeaf = false;
 
                 // try insertion again
                 treeNode = getTreeNode(node_id);
