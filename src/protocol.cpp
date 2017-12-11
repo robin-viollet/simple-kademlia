@@ -140,7 +140,7 @@ namespace kdml {
     void Protocol::async_get(mp::uint256_t key, kdml::GetCallback callback) {
 //        Nodes a_closest_nodes = routingTable.getAClosestNodes(a, key);
 //        for(NodeInfo node : a_closest_nodes) {
-//            network->send_find_value(key, node, find_value_callback, callback);
+//            network->send_find_value(key, node);
 //        }
         node_lookup(key, callback, true);
     }
@@ -154,7 +154,10 @@ namespace kdml {
     }
 
     void Protocol::store_callback(boost::multiprecision::uint256_t key, Nodes nodes) {
+
         for(NodeInfo node : nodes) {
+            std::cout << "Storing value in node with ip addr " << node.ipAddr << " and id " << node.id
+                      << " for key " << key << std::endl;
             network->send_store(key, node);
         }
     }
@@ -171,6 +174,8 @@ namespace kdml {
         request_state.findValue = findValue;
         request_state.callback = callback;
         for(NodeInfo node : a_closest_nodes) {
+            std::cout << "Looked up node with ip addr " << node.ipAddr << " and id " << node.id
+                      << " for key " << key << std::endl;
             NodeInfoWrapper node_wrapper(key, node);
             request_state.k_closest_nodes.push(node_wrapper);
             request_state.responses_waiting++;
@@ -199,6 +204,7 @@ namespace kdml {
 //                request_state.unqueried_nodes.push(node);
                 request_state.k_closest_nodes.push(node_wrapper);
                 if (request_state.node_comp(node_wrapper, closest)) {
+                    std::cout << "Node is closer" << std::endl;
                     request_state.responses_waiting++;
                     if (request_state.findValue) {
                         network->send_find_value(key, node);
@@ -207,6 +213,7 @@ namespace kdml {
                     }
                 }
             }
+            std::cout << "responses waiting " << request_state.responses_waiting << endl;
             if (request_state.responses_waiting == 0) {
                 std::vector<NodeInfo> k_nodes;
                 while(!request_state.k_closest_nodes.empty() && k_nodes.size() < k) {
@@ -220,6 +227,7 @@ namespace kdml {
                     store_callback(key, k_nodes);
                 }
 
+              lookups[key] = NULL;
             }
 
         } else {

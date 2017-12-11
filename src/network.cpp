@@ -105,7 +105,6 @@ namespace kdml {
             send_RPC(dest, find_node_message);
             Request request(tid, [](std::shared_ptr<net::ResponseMessage> res) {
                 FindNodeResponse &node_res = dynamic_cast<net::FindNodeResponse&>(*res);
-//                onComplete(node_res.nodes, node_res.id);
             });
             request.key = key;
             requests.insert(std::make_pair(tid, request));
@@ -117,7 +116,6 @@ namespace kdml {
             send_RPC(dest, find_value_message);
             Request request(tid, [](std::shared_ptr<net::ResponseMessage> res) {
                 FindValueResponse &value_res = dynamic_cast<net::FindValueResponse&>(*res);
-//                onComplete(value_res.data, value_res.id, value_res.found, callback);
             });
             request.key = key;
             request.findValue = true;
