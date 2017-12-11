@@ -82,6 +82,7 @@ namespace kdml {
                 if (failure) {
                     probePeers(endpoints);
                 } else {
+                    std::cout << "Kademlia: Probe Peers found: " << ep.getIpAddr() << std::endl;
                     auto bucket = routingTable.insertNode(ep);
                     node_lookup(owner.id, [bucket](Nodes found) {
                     }, false);
@@ -150,6 +151,7 @@ namespace kdml {
 //        for(NodeInfo node : a_closest_nodes) {
 //            network->send_store(key, node);
 //        }
+        std::cout << "Kademlia: Async Store called with key: " << key << std::endl;
         node_lookup(key, NULL, false);
     }
 
