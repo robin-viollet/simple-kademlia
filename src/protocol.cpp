@@ -225,7 +225,7 @@ namespace kdml {
                 }
 
                 lookups.erase ( it, lookups.end() );
-//            }
+            }
 
         } else {
             //todo:
