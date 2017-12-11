@@ -144,6 +144,8 @@ namespace kdml {
                 oarchive(message);
             }
 
+            std::cout << "SEND to " << dest << " " << *message << std::endl;
+
             socket.async_send_to(sb.data(), destination,
                                  boost::bind(&Network::handleSend, this, message,
                                              boost::asio::placeholders::error,
@@ -154,10 +156,8 @@ namespace kdml {
             if (error) {
                 std::cerr << "Error sending message: " << *msg << std::endl;
             } else if (msg->getMessageType() == MessageType::RESPONSE) {
-                std::cout << "Sent response: " << *msg << std::endl;
                 // do nothing
             } else if (msg->getMessageType() == MessageType::QUERY){
-                std::cout << "Sent query: " << *msg << std::endl;
                 // TODO
                 // construct requests prior to send_RPC and pass them to send_RPC and handleSend
                 // insert request into map
