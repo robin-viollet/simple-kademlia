@@ -13,7 +13,7 @@ namespace kdml {
     using Nodes = std::vector<NodeInfo>;
     using GetCallback = std::function<void(Nodes)>;
     using FindNodeCallback = std::function<void(Nodes, boost::multiprecision::uint256_t)>;
-    using FindValueCallback = std::function<void(Nodes, boost::multiprecision::uint256_t, bool found)>;
+    using FindValueCallback = std::function<void(Nodes, boost::multiprecision::uint256_t, bool found, GetCallback callback)>;
     using SimpleCallback = std::function<void(bool failure)>;
     //todo: findvalue callback returns either list of nodes or value
 }

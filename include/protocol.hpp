@@ -16,7 +16,7 @@ namespace kdml {
         class Network;
     }
     // number of concurrent lookups in node lookup
-    const int a = 1;
+    const int a = 3;
 
     class Protocol {
 

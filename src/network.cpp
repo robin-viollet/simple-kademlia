@@ -110,13 +110,13 @@ namespace kdml {
             requests.insert(std::make_pair(tid, request));
         }
 
-        void Network::send_find_value(mp::uint256_t key, NodeInfo dest, FindValueCallback onComplete) {
+        void Network::send_find_value(mp::uint256_t key, NodeInfo dest, FindValueCallback onComplete, GetCallback callback) {
             long tid = next_tid++;
             std::shared_ptr<net::Message> find_value_message = std::make_shared<net::FindQuery>(owner.id, tid, key, QueryType::FIND_VALUE);
             send_RPC(dest, find_value_message);
-            Request request(tid, [onComplete](std::shared_ptr<net::ResponseMessage> res) {
+            Request request(tid, [onComplete, callback](std::shared_ptr<net::ResponseMessage> res) {
                 FindValueResponse &value_res = dynamic_cast<net::FindValueResponse&>(*res);
-                onComplete(value_res.data, value_res.id, value_res.found);
+                onComplete(value_res.data, value_res.id, value_res.found, callback);
             });
             requests.insert(std::make_pair(tid, request));
         }

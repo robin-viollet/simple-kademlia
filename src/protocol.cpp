@@ -132,8 +132,26 @@ namespace kdml {
         return (key ^ a.id) < (key ^ b.id);
     }
 
+    void find_value_callback(Nodes nodes, boost::multiprecision::uint256_t key, bool found, GetCallback callback) {
+        if(found) {
+            callback(nodes);
+        } else {
+            callback(std::vector<NodeInfo>());
+        }
+    }
+
     void Protocol::async_get(mp::uint256_t key, kdml::GetCallback callback) {
-//        nodeLookUp
+        Nodes a_closest_nodes = routingTable.getAClosestNodes(a, key);
+        for(NodeInfo node : a_closest_nodes) {
+            network->send_find_value(key, node, find_value_callback, callback);
+        }
+    }
+
+    void Protocol::async_store(boost::multiprecision::uint256_t key, NodeInfo value) {
+        Nodes a_closest_nodes = routingTable.getAClosestNodes(a, key);
+        for(NodeInfo node : a_closest_nodes) {
+            network->send_store(key, node);
+        }
     }
 
     /*
@@ -141,55 +159,55 @@ namespace kdml {
      * Pass heap allocated queue to each
      */
     void Protocol::node_lookup(boost::multiprecision::uint256_t key, kdml::GetCallback callback) {
-        this->callback = callback;
-        std::vector<NodeInfo> a_closest_nodes = routingTable.getAClosestNodes(a, key);
-        auto key_comp = [key](NodeInfo a, NodeInfo b) {
-            // Distance of node from key defined as XOR value.
-            return node_closer(key, a, b);
-        };
-        k_nodes_queue = new std::priority_queue<NodeInfo, std::vector<NodeInfo>, decltype(key_comp)>(key_comp);
-        std::priority_queue<NodeInfo> *queue = (std::priority_queue<NodeInfo> *)k_nodes_queue;
-        for(NodeInfo node : a_closest_nodes) {
-            queue->push(node);
-            responses_waiting++;
-            network->send_find_node(key, node, find_node_callback);
-        }
-        if (responses_waiting == 0) {
-            callback(a_closest_nodes);
-        }
+//        this->callback = callback;
+//        std::vector<NodeInfo> a_closest_nodes = routingTable.getAClosestNodes(a, key);
+//        auto key_comp = [key](NodeInfo a, NodeInfo b) {
+//            // Distance of node from key defined as XOR value.
+//            return node_closer(key, a, b);
+//        };
+//        k_nodes_queue = new std::priority_queue<NodeInfo, std::vector<NodeInfo>, decltype(key_comp)>(key_comp);
+//        std::priority_queue<NodeInfo> *queue = (std::priority_queue<NodeInfo> *)k_nodes_queue;
+//        for(NodeInfo node : a_closest_nodes) {
+//            queue->push(node);
+//            responses_waiting++;
+//            network->send_find_node(key, node, find_node_callback);
+//        }
+//        if (responses_waiting == 0) {
+//            callback(a_closest_nodes);
+//        }
     }
 
     void find_node_callback(std::vector<NodeInfo> k_closest_nodes, boost::multiprecision::uint256_t key,
                                       kdml::GetCallback callback, void *k_nodes_queue) {
-        std::priority_queue<NodeInfo> *queue = (std::priority_queue<NodeInfo> *)k_nodes_queue;
-        responses_waiting--;
-        NodeInfo closest = queue->top();
-        // todo: This could send rpcs to all k nodes, not just a nodes. Need to set nodeinfo's as queried.
-        // also need to check which nodes have responded
-        for(NodeInfo node : k_closest_nodes) {
-            if (node_closer(key, node, closest)) {
-                queue->push(node);
-                responses_waiting++;
-                network->send_find_node(key, node, find_node_callback);
-            }
-        }
-
-        // If all nodes queried have responded, return k_closest_nodes.
-        // todo: stop waiting after amount of time?
-        if (responses_waiting == 0) {
-            std::vector<NodeInfo> k_nodes;
-            while(!queue->empty() && k_nodes.size() < k) {
-                k_nodes.push_back(queue->top());
-                queue->pop();
-            }
-            callback(k_nodes);
-        }
+//        std::priority_queue<NodeInfo> *queue = (std::priority_queue<NodeInfo> *)k_nodes_queue;
+//        responses_waiting--;
+//        NodeInfo closest = queue->top();
+//        // todo: This could send rpcs to all k nodes, not just a nodes. Need to set nodeinfo's as queried.
+//        // also need to check which nodes have responded
+//        for(NodeInfo node : k_closest_nodes) {
+//            if (node_closer(key, node, closest)) {
+//                queue->push(node);
+//                responses_waiting++;
+//                network->send_find_node(key, node, find_node_callback);
+//            }
+//        }
+//
+//        // If all nodes queried have responded, return k_closest_nodes.
+//        // todo: stop waiting after amount of time?
+//        if (responses_waiting == 0) {
+//            std::vector<NodeInfo> k_nodes;
+//            while(!queue->empty() && k_nodes.size() < k) {
+//                k_nodes.push_back(queue->top());
+//                queue->pop();
+//            }
+//            callback(k_nodes);
+//        }
 
     }
 
 
     void Protocol::handleQuery(std::shared_ptr<net::QueryMessage> msg,
-                               NodeInfo* sender) {
+                               NodeInfo sender) {
 
         switch (msg->getQueryType()) {
             case net::QueryType::PING: {
@@ -203,7 +221,7 @@ namespace kdml {
                 result.resize(nodes.size());
 
                 std::transform(nodes.begin(), nodes.end(), result.begin(),
-                               [](NodeInfo* node) { return *node; }
+                               [](NodeInfo node) { return node; }
                 );
 
                 network->send_find_node_response(sender, result, msg->getTid());
@@ -219,8 +237,8 @@ namespace kdml {
                 } else {
                     auto nodes = routingTable.getKClosestNodes(query->getTarget());
                     std::transform(nodes.begin(), nodes.end(), result.begin(),
-                                   [](NodeInfo* node) {
-                                       return *node;
+                                   [](NodeInfo node) {
+                                       return node;
                                    });
                 }
                 network->send_find_value_response(sender, found, result,
