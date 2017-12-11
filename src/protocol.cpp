@@ -193,35 +193,35 @@ namespace kdml {
         auto it = lookups.find(key);
         if (it != lookups.end()) {
             RequestState request_state = it->second;
-//            request_state.responses_waiting--;
-//            NodeInfoWrapper closest = request_state.k_closest_nodes.top();
-//            for(NodeInfo node : k_closest_nodes) {
-//                NodeInfoWrapper node_wrapper(key, node);
-//                //todo: fix
-////                request_state.unqueried_nodes.push(node);
-//                request_state.k_closest_nodes.push(node_wrapper);
-//                if (request_state.node_comp(node_wrapper, closest)) {
-//                    std::cout << "Node is closer " << (node_wrapper.key ^ node_wrapper.node.id) << " vs. " << (closest.key ^ closest.node.id) << std::endl;
-//                    request_state.responses_waiting++;
-//                    if (request_state.findValue) {
-//                        network->send_find_value(key, node);
-//                    } else {
-//                        network->send_find_node(key, node);
-//                    }
-//                }
-//            }
-//            std::cout << "responses waiting " << request_state.responses_waiting << std::endl;
-//            if (request_state.responses_waiting == 0) {
-//                std::vector<NodeInfo> k_nodes;
-//                while(!request_state.k_closest_nodes.empty() && k_nodes.size() < k) {
-//                    k_nodes.push_back(request_state.k_closest_nodes.top().node);
-//                    request_state.k_closest_nodes.pop();
-//                }
+            request_state.responses_waiting--;
+            NodeInfoWrapper closest = request_state.k_closest_nodes.top();
+            for(NodeInfo node : k_closest_nodes) {
+                NodeInfoWrapper node_wrapper(key, node);
+                //todo: fix
+//                request_state.unqueried_nodes.push(node);
+                request_state.k_closest_nodes.push(node_wrapper);
+                if (request_state.node_comp(node_wrapper, closest)) {
+                    std::cout << "Node is closer " << (node_wrapper.key ^ node_wrapper.node.id) << " vs. " << (closest.key ^ closest.node.id) << std::endl;
+                    request_state.responses_waiting++;
+                    if (request_state.findValue) {
+                        network->send_find_value(key, node);
+                    } else {
+                        network->send_find_node(key, node);
+                    }
+                }
+            }
+            std::cout << "responses waiting " << request_state.responses_waiting << std::endl;
+            if (request_state.responses_waiting == 0) {
+                std::vector<NodeInfo> k_nodes;
+                while(!request_state.k_closest_nodes.empty() && k_nodes.size() < k) {
+                    k_nodes.push_back(request_state.k_closest_nodes.top().node);
+                    request_state.k_closest_nodes.pop();
+                }
                 if (request_state.findValue) {
                     find_value_callback(k_closest_nodes, key, found, request_state.callback);
                 } else {
                     //store query
-                    store_callback(key, k_closest_nodes);
+                    store_callback(key, k_nodes);
                 }
 
                 lookups.erase ( it, lookups.end() );
