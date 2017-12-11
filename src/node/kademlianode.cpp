@@ -34,6 +34,14 @@ namespace kdml {
     }
 
     void KademliaNode::put(std::string key) {
-        //todo:  async_store
+        namespace mp = boost::multiprecision;
+
+        std::vector<unsigned char> hash(32);
+        picosha2::hash256(key.begin(), key.end(), hash.begin(), hash.end());
+
+        mp::uint256_t keyHash;
+        mp::import_bits(keyHash, hash.begin(), hash.end());
+
+        protocol.async_store(keyHash, protocol.getOwner());
     }
 }

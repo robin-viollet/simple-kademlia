@@ -87,6 +87,8 @@ namespace kdml {
         void bootstrap(const NodeInfo& peer);
         void join();
 
+        NodeInfo getOwner() { return owner; };
+
         void node_lookup(boost::multiprecision::uint256_t key, GetCallback callback, bool findValue);
         void handleReceive(const boost::system::error_code& error,
                            std::size_t /*bytes_transferred*/);
