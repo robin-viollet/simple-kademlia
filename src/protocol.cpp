@@ -117,12 +117,12 @@ namespace kdml {
                 break;
             }
             case net::MessageType::QUERY: {
-                routingTable.insertNode(sender);
+//                routingTable.insertNode(sender);
                 handleQuery(std::dynamic_pointer_cast<net::QueryMessage>(msg), sender);
                 break;
             }
             case net::MessageType::RESPONSE: {
-                routingTable.insertNode(sender);
+//                routingTable.insertNode(sender);
                 handleResponse(std::dynamic_pointer_cast<net::ResponseMessage>(msg));
                 break;
             }
