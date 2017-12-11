@@ -141,14 +141,16 @@ namespace kdml {
      * Pass heap allocated queue to each
      */
     void Protocol::node_lookup(boost::multiprecision::uint256_t key, kdml::GetCallback callback) {
+        this->callback = callback;
         std::vector<NodeInfo> a_closest_nodes = routingTable.getAClosestNodes(a, key);
-        auto comp = [key](NodeInfo* a, NodeInfo* b) {
+        auto key_comp = [key](NodeInfo a, NodeInfo b) {
             // Distance of node from key defined as XOR value.
             return node_closer(key, a, b);
         };
-        k_nodes_queue = new std::priority_queue<NodeInfo, std::vector<NodeInfo>, decltype(comp)>;
-        for(NodeInfo* node : a_closest_nodes) {
-            k_nodes_queue->push(node);
+        k_nodes_queue = new std::priority_queue<NodeInfo, std::vector<NodeInfo>, decltype(key_comp)>(key_comp);
+        std::priority_queue<NodeInfo> *queue = (std::priority_queue<NodeInfo> *)k_nodes_queue;
+        for(NodeInfo node : a_closest_nodes) {
+            queue->push(node);
             responses_waiting++;
             network->send_find_node(key, node, find_node_callback);
         }
@@ -157,15 +159,16 @@ namespace kdml {
         }
     }
 
-    void Protocol::find_node_callback(std::vector<NodeInfo> k_closest_nodes, boost::multiprecision::uint256_t key,
-                                      kdml::GetCallback callback) {
+    void find_node_callback(std::vector<NodeInfo> k_closest_nodes, boost::multiprecision::uint256_t key,
+                                      kdml::GetCallback callback, void *k_nodes_queue) {
+        std::priority_queue<NodeInfo> *queue = (std::priority_queue<NodeInfo> *)k_nodes_queue;
         responses_waiting--;
-        NodeInfo closest = k_nodes_queue->top();
+        NodeInfo closest = queue->top();
         // todo: This could send rpcs to all k nodes, not just a nodes. Need to set nodeinfo's as queried.
         // also need to check which nodes have responded
         for(NodeInfo node : k_closest_nodes) {
             if (node_closer(key, node, closest)) {
-                k_nodes_queue->push(node);
+                queue->push(node);
                 responses_waiting++;
                 network->send_find_node(key, node, find_node_callback);
             }
@@ -175,9 +178,9 @@ namespace kdml {
         // todo: stop waiting after amount of time?
         if (responses_waiting == 0) {
             std::vector<NodeInfo> k_nodes;
-            while(!k_nodes_queue->empty() && k_nodes.size() < k) {
-                k_nodes.push_back(k_nodes_queue->top());
-                k_nodes_queue->pop();
+            while(!queue->empty() && k_nodes.size() < k) {
+                k_nodes.push_back(queue->top());
+                queue->pop();
             }
             callback(k_nodes);
         }

@@ -42,15 +42,16 @@ namespace kdml {
         Nodes resolveEndpoint(const NodeInfo& ep);
 
         //todo: map of key -> dynamic priority queue for node lookup, callback
-        std::priority_queue<NodeInfo, std::vector<NodeInfo>, bool(*)(NodeInfo, NodeInfo)> *k_nodes_queue;
+        void *k_nodes_queue;
         GetCallback callback;
+        boost::multiprecision::uint256_t keySearch;
         int responses_waiting = 0;
-        void find_node_callback(std::vector<NodeInfo > k_closest_nodes, boost::multiprecision::uint256_t key);
 
     public:
         explicit Protocol(const NodeInfo& owner);
 
         void async_get(boost::multiprecision::uint256_t key, kdml::GetCallback callback);
+        void async_store(boost::multiprecision::uint256_t key, NodeInfo value);
 
         void bootstrap(const NodeInfo& peer);
         void join();

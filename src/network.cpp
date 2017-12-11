@@ -92,10 +92,11 @@ namespace kdml {
             long tid = next_tid++;
             std::shared_ptr<net::Message> ping_message = std::make_shared<net::PingQuery>(owner.id, tid);
             send_RPC(dest, ping_message);
-//        Request request = new Request(tid, [onPong](std::shared_ptr<net::Message> res) {
-//            //todo: parse message and call onPong
-//        });
-//        requests.insert(std::make_pair(tid, request));
+            Request request(tid, [onPong](std::shared_ptr<net::ResponseMessage> res) {
+                PingResponse &node_res = dynamic_cast<net::PingResponse&>(*res);
+                onPong(true);
+            });
+            requests.insert(std::make_pair(tid, request));
         }
 
         void Network::send_find_node(mp::uint256_t key, NodeInfo dest, FindNodeCallback onComplete) {
@@ -124,7 +125,7 @@ namespace kdml {
             long tid = next_tid++;
             std::shared_ptr<net::Message> store_message = std::make_shared<net::StoreQuery>(owner.id, tid, key, owner);
             send_RPC(dest, store_message);
-            Request request = new Request(tid, [](std::shared_ptr<net::Message> res) {
+            Request request(tid, [](std::shared_ptr<net::Message> res) {
                 //empty callback
             });
             requests.insert(std::make_pair(tid, request));
