@@ -31,7 +31,8 @@ namespace kdml {
     class NodeComparison {
     public:
         bool operator() (NodeInfoWrapper a, NodeInfoWrapper b) {
-            return (a.key ^ a.node.id) < (b.key ^ b.node.id);
+            //todo: check if this is correct order
+            return (a.key ^ a.node.id) > (b.key ^ b.node.id);
         }
     };
 

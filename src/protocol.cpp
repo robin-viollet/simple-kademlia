@@ -133,8 +133,10 @@ namespace kdml {
 
     void find_value_callback(Nodes nodes, boost::multiprecision::uint256_t key, bool found, GetCallback callback) {
         if(found) {
+            std::cout << "found a node" << std::endl;
             callback(nodes);
         } else {
+            std::cout << "did not find a node" << std::endl;
             callback(std::vector<NodeInfo>());
         }
     }
