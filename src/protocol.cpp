@@ -210,6 +210,7 @@ namespace kdml {
             for(NodeInfo node : k_closest_nodes) {
                 auto it = request_state.queried_nodes.find(node.id);
                 if (it != request_state.queried_nodes.end()) {
+                    std::cout << "already queried node" << std::endl;
                     continue;
                 }
                 NodeInfoWrapper node_wrapper(key, node);
