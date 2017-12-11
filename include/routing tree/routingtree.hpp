@@ -107,7 +107,7 @@ namespace kdml {
         }
 
         bool insertNode(NodeInfo node) {
-            std::cout << "Inserting node with ip addr " << node.ipAddr << std::endl;
+            std::cout << "Inserting node with ip addr " << node.getIpAddr() << std::endl;
             mp::uint256_t node_id = node.id;
             RoutingTreeNode *treeNode = getTreeNode(node_id);
             kBucket *bucket = treeNode->bucket;
