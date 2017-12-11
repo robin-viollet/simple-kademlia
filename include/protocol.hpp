@@ -46,6 +46,8 @@ namespace kdml {
             return (a.key ^ a.node.id) < (b.key ^ b.node.id);
         }
 
+        std::set<boost::multiprecision::uint256_t> queried_nodes;
+
         std::priority_queue<NodeInfoWrapper, std::vector<NodeInfoWrapper>, NodeComparison> k_closest_nodes;
 
 //        std::priority_queue<NodeInfoWrapper, std::vector<NodeInfoWrapper>, decltype(&node_comp)> unqueried_nodes;

@@ -208,14 +208,15 @@ namespace kdml {
             request_state.responses_waiting--;
             NodeInfoWrapper closest = request_state.k_closest_nodes.top();
             for(NodeInfo node : k_closest_nodes) {
+                auto it = request_state.queried_nodes.find(node.id);
+                if (it != request_state.queried_nodes.end()) {
+                    continue;
+                }
                 NodeInfoWrapper node_wrapper(key, node);
-                //todo: fix
-//                request_state.unqueried_nodes.push(node);
                 request_state.k_closest_nodes.push(node_wrapper);
                 if (request_state.node_comp(node_wrapper, closest)) {
-                    std::cout << "Node is closer " << (node_wrapper.key ^ node_wrapper.node.id) << " vs. " << (closest.key ^ closest.node.id) << std::endl;
-                    std::cout << "The front of the queue is: " << (request_state.k_closest_nodes.top().key ^ request_state.k_closest_nodes.top().node.id) << std::endl;
                     request_state.responses_waiting++;
+                    request_state.queried_nodes.insert(node.id);
                     if (request_state.findValue) {
                         network->send_find_value(key, node);
                     } else {
