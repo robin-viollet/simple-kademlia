@@ -220,16 +220,16 @@ namespace kdml {
 //            }
 //            std::cout << "responses waiting " << request_state.responses_waiting << std::endl;
 //            if (request_state.responses_waiting == 0) {
-                std::vector<NodeInfo> k_nodes;
-                while(!request_state.k_closest_nodes.empty() && k_nodes.size() < k) {
-                    k_nodes.push_back(request_state.k_closest_nodes.top().node);
-                    request_state.k_closest_nodes.pop();
-                }
+//                std::vector<NodeInfo> k_nodes;
+//                while(!request_state.k_closest_nodes.empty() && k_nodes.size() < k) {
+//                    k_nodes.push_back(request_state.k_closest_nodes.top().node);
+//                    request_state.k_closest_nodes.pop();
+//                }
                 if (request_state.findValue) {
-                    find_value_callback(k_nodes, key, found, request_state.callback);
+                    find_value_callback(k_closest_nodes, key, found, request_state.callback);
                 } else {
                     //store query
-                    store_callback(key, k_nodes);
+                    store_callback(key, k_closest_nodes);
                 }
 
                 lookups.erase ( it, lookups.end() );
