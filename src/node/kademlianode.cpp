@@ -12,6 +12,7 @@ namespace kdml {
             : protocol({ipAddr, port}) {}
 
     void KademliaNode::bootstrap(const kdml::NodeInfo& peer) {
+        std::cout << "bootstrap" << std::endl;
         protocol.bootstrap(peer);
     }
 
