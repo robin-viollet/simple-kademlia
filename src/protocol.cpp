@@ -156,6 +156,7 @@ namespace kdml {
             std::cout << "Storing value in node with ip addr " << node.ipAddr << " and id " << node.id
                       << " for key " << key << std::endl;
             network->send_store(key, node);
+            break; //only store on one node for now
         }
     }
 
@@ -213,6 +214,7 @@ namespace kdml {
                 request_state.k_closest_nodes.push(node_wrapper);
                 if (request_state.node_comp(node_wrapper, closest)) {
                     std::cout << "Node is closer " << (node_wrapper.key ^ node_wrapper.node.id) << " vs. " << (closest.key ^ closest.node.id) << std::endl;
+                    std::cout << "The front of the queue is: " << (request_state.k_closest_nodes.top().key ^ request_state.k_closest_nodes.top().node.id) << std::endl;
                     request_state.responses_waiting++;
                     if (request_state.findValue) {
                         network->send_find_value(key, node);
@@ -274,11 +276,7 @@ namespace kdml {
                 if (found) {
                     result = value->second;
                 } else {
-                    auto nodes = routingTable.getKClosestNodes(query->getTarget());
-                    std::transform(nodes.begin(), nodes.end(), result.begin(),
-                                   [](NodeInfo node) {
-                                       return node;
-                                   });
+                    result = routingTable.getKClosestNodes(query->getTarget());
                 }
                 network->send_find_value_response(sender, found, result,
                                                   msg->getTid());
