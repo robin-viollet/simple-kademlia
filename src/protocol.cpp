@@ -192,7 +192,18 @@ namespace kdml {
 
         auto it = lookups.find(key);
         if (it != lookups.end()) {
+
             RequestState request_state = it->second;
+
+            if (found) {
+                if (!request_state.findValue) {
+                    std::cout << "that's super weird" << std::endl;
+                }
+                find_value_callback(k_closest_nodes, key, found, request_state.callback);
+                lookups.erase ( it, lookups.end() );
+                return;
+            }
+
             request_state.responses_waiting--;
             NodeInfoWrapper closest = request_state.k_closest_nodes.top();
             for(NodeInfo node : k_closest_nodes) {
@@ -218,7 +229,7 @@ namespace kdml {
                     request_state.k_closest_nodes.pop();
                 }
                 if (request_state.findValue) {
-                    find_value_callback(k_closest_nodes, key, found, request_state.callback);
+                    find_value_callback(k_nodes, key, found, request_state.callback);
                 } else {
                     //store query
                     store_callback(key, k_nodes);
@@ -228,7 +239,7 @@ namespace kdml {
             }
 
         } else {
-            //todo:
+            std::cout << "got response for something already found" << std::endl;
         }
 
     }
