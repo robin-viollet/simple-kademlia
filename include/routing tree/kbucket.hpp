@@ -30,6 +30,7 @@ namespace kdml {
         }
 
         bool insertNode(NodeInfo node) {
+
             if (contacts.size() < k) {
                 contacts.push_back(node);
                 return true;

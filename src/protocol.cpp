@@ -213,7 +213,7 @@ namespace kdml {
                     }
                 }
             }
-            std::cout << "responses waiting " << request_state.responses_waiting << endl;
+            std::cout << "responses waiting " << request_state.responses_waiting << std::endl;
             if (request_state.responses_waiting == 0) {
                 std::vector<NodeInfo> k_nodes;
                 while(!request_state.k_closest_nodes.empty() && k_nodes.size() < k) {
@@ -227,7 +227,7 @@ namespace kdml {
                     store_callback(key, k_nodes);
                 }
 
-              lookups[key] = NULL;
+                lookups.erase ( it, lookups.end() );
             }
 
         } else {
