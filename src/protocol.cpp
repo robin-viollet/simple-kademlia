@@ -196,7 +196,7 @@ namespace kdml {
     }
 
     void Protocol::node_lookup_callback(std::vector<NodeInfo> k_closest_nodes,
-                                        boost::multiprecision::uint256_t key) {
+                                        boost::multiprecision::uint256_t key, bool found) {
 
         auto it = lookups.find(key);
         if (it != lookups.end()) {
@@ -226,7 +226,7 @@ namespace kdml {
                     request_state.k_closest_nodes.pop();
                 }
                 if (request_state.findValue) {
-                    request_state.callback(k_nodes);
+                    find_value_callback(k_nodes, key, found, request_state.callback);
                 } else {
                     //store query
                     store_callback(key, k_nodes);
@@ -307,10 +307,10 @@ namespace kdml {
                 RequestState request_state = it->second;
                 if (outstanding.findValue) {
                     net::FindValueResponse &value_res = dynamic_cast<net::FindValueResponse&>(*msg);
-                    node_lookup_callback(value_res.data, outstanding.key);
+                    node_lookup_callback(value_res.data, outstanding.key, value_res.found);
                 } else {
                     net::FindNodeResponse &find_res = dynamic_cast<net::FindNodeResponse&>(*msg);
-                    node_lookup_callback(find_res.nodes, outstanding.key);
+                    node_lookup_callback(find_res.nodes, outstanding.key, false);
                 }
             }
         }

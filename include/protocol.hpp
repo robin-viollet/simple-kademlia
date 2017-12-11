@@ -75,7 +75,7 @@ namespace kdml {
         std::map<boost::multiprecision::uint256_t, RequestState> lookups;
 
         void node_lookup_callback(std::vector<NodeInfo> k_closest_nodes,
-                                            boost::multiprecision::uint256_t key);
+                                            boost::multiprecision::uint256_t key, bool found);
 
         void store_callback(boost::multiprecision::uint256_t key, Nodes nodes);
 
