@@ -142,18 +142,10 @@ namespace kdml {
     }
 
     void Protocol::async_get(mp::uint256_t key, kdml::GetCallback callback) {
-//        Nodes a_closest_nodes = routingTable.getAClosestNodes(a, key);
-//        for(NodeInfo node : a_closest_nodes) {
-//            network->send_find_value(key, node);
-//        }
         node_lookup(key, callback, true);
     }
 
     void Protocol::async_store(boost::multiprecision::uint256_t key, NodeInfo value) {
-//        Nodes a_closest_nodes = routingTable.getAClosestNodes(a, key);
-//        for(NodeInfo node : a_closest_nodes) {
-//            network->send_store(key, node);
-//        }
         std::cout << "Kademlia: Async Store called with key: " << key << std::endl;
         node_lookup(key, NULL, false);
     }
