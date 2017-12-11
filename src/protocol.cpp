@@ -214,7 +214,7 @@ namespace kdml {
                 }
                 NodeInfoWrapper node_wrapper(key, node);
                 request_state.k_closest_nodes.push(node_wrapper);
-                if (request_state.node_comp(node_wrapper, closest)) {
+//                if (request_state.node_comp(node_wrapper, closest)) {     // TODO: check each WAVE if k closest nodes has changed
                     request_state.responses_waiting++;
                     request_state.queried_nodes.insert(node.id);
                     if (request_state.findValue) {
@@ -222,7 +222,7 @@ namespace kdml {
                     } else {
                         network->send_find_node(key, node);
                     }
-                }
+//                }
             }
             std::cout << "responses waiting " << request_state.responses_waiting << std::endl;
             if (request_state.responses_waiting == 0) {
