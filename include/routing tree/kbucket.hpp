@@ -39,7 +39,7 @@ namespace kdml {
 
         // Checks if first tree_level bits of prefix and node_id are the same
         bool rangeContainsId(const mp::uint256_t &node_id) {
-            return ((prefix >> 256 - tree_level) ^ (node_id >> 256 - tree_level)) == 0;
+            return ((prefix >> (256 - tree_level)) ^ (node_id >> (256 - tree_level))) == 0;
         }
 
         // Iterates over node info list and
@@ -61,7 +61,7 @@ namespace kdml {
         // todo: check if tree level is max (probably won't happen)
         kBucket *split() {
             tree_level++;
-            mp::uint256_t new_prefix = prefix | (1 << 256 - tree_level);
+            mp::uint256_t new_prefix = prefix | (1 << (256 - tree_level));
             auto *new_bucket = new kBucket(new_prefix, tree_level);
             splitNodes(new_bucket);
             return new_bucket;
@@ -73,7 +73,7 @@ namespace kdml {
         int getNodes(std::vector<NodeInfo*>& nodes, int num_nodes) {
             int num_added = 0;
             auto i = contacts.begin();
-            for (i; i != contacts.end() && num_added < num_nodes; i++) {
+            for (; i != contacts.end() && num_added < num_nodes; i++) {
                 NodeInfo *node = *i;
                 nodes.push_back(node);
                 num_added++;

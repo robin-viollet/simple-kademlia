@@ -7,11 +7,12 @@
 
 // Boost earlier 1.60 doesn't have import_bits/export_bits
 #if BOOST_VERSION < 106000
-#include "aux/cppint_import_export.hpp"
+//#include "aux/cppint_import_export.hpp"
 #endif
 
 #include <aux/picosha2.hpp>
 #include <arpa/inet.h>
+#include <boost/multiprecision/cpp_int.hpp>
 
 namespace kdml {
 
