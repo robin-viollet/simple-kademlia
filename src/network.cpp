@@ -6,8 +6,9 @@
 #include <messages/pingQuery.hpp>
 #include <messages/storeQuery.hpp>
 #include <boost/asio/ip/udp.hpp>
-#include <boost/asio/streambuf.hpp>
+#include <boost/bind.hpp>
 #include "network.hpp"
+#include "protocol.hpp"
 
 /* TODO: user passes local IP or we decide?
  * boost::asio::io_service io_service;
@@ -18,45 +19,72 @@
  */
 
 namespace kdml {
+    namespace net {
 
-    using boost::asio::ip::udp;
+        using boost::asio::ip::udp;
+        namespace asio = boost::asio;
 
-    bool Network::containsReq(uint32_t tid) {
-        return requests.find(tid) != requests.end();
-    }
+        Network::Network(NodeInfo node, asio::io_service &ioService, Protocol *protocol)
+                : owner(std::move(node)), next_tid(0), requests{}, protocol(protocol),
+                  socket(ioService, udp::endpoint(udp::v4(), node.port)) {}
 
-    Request Network::getReq(uint32_t tid) {
-        return requests.at(tid);
-    }
+        void Network::startReceive() {
+            socket.async_receive(
+                    asio::null_buffers(),
+                    boost::bind(&kdml::Protocol::handleReceive, protocol,
+                                asio::placeholders::error,
+                                asio::placeholders::bytes_transferred));
+        }
 
-    void Network::send_ping_response(NodeInfo info, uint32_t i) {
+        boost::system::error_code Network::populateBuf(asio::streambuf &sb) {
+            size_t available = socket.available();
+            auto buffer = sb.prepare(available);
+            boost::system::error_code recvError;
+            size_t bytesRead = socket.receive_from(buffer, remote, 0, recvError);
+            sb.commit(bytesRead);
 
-    }
+            if (!recvError) {
+                std::cout << "Read " << bytesRead << " bytes" << std::endl;
+            } else {
+                std::cout << "Error: " << recvError.message() << std::endl;
+            }
+            return recvError;
+        }
 
-    void Network::send_find_node_response(NodeInfo dest, Nodes nodes, uint32_t tid) {
+        NodeInfo Network::getRemotePeer() {
+            return {remote.address().to_string(), remote.port()};
+        }
 
-    }
+        bool Network::containsReq(uint32_t tid) {
+            return requests.find(tid) != requests.end();
+        }
 
-    void Network::send_store_response(NodeInfo dest, bool success, uint32_t tid) {
+        Request Network::getRequest(uint32_t tid) {
+            return requests.at(tid);
+        }
 
-    }
+        void Network::send_ping_response(NodeInfo *dest, uint32_t tid) {
+        }
 
-    void Network::send_find_value_response(NodeInfo dest, bool success, Nodes result, uint32_t tid) {
+        void Network::send_find_node_response(NodeInfo *dest, Nodes nodes, uint32_t tid) {
 
-    }
+        }
 
+        void Network::send_store_response(NodeInfo *dest, bool success, uint32_t tid) {
 
-    void Network::send_ping(NodeInfo dest, SimpleCallback onPong) {
-        long tid = next_tid++;
-        Request request(dest, tid, [onPong](std::shared_ptr<net::Message> res) {
-//            //todo: parse message and call onPong
-        });
-        std::shared_ptr<net::Message> ping_message = std::make_shared<net::PingQuery>(owner.id, tid);
-        send_RPC(dest, ping_message);
-        requests.insert(std::make_pair(tid, request));
-    }
+        }
 
-    void Network::send_find_node(mp::uint256_t key, NodeInfo dest, GetCallback onComplete) {
+        void Network::send_ping(NodeInfo dest, SimpleCallback onPong) {
+            long tid = next_tid++;
+            Request request(dest, tid, [onPong](std::shared_ptr<net::Message> res) {
+    //            //todo: parse message and call onPong
+            });
+            std::shared_ptr<net::Message> ping_message = std::make_shared<net::PingQuery>(owner.id, tid);
+            send_RPC(dest, ping_message);
+            requests.insert(std::make_pair(tid, request));
+        }
+
+        void Network::send_find_node(mp::uint256_t key, NodeInfo dest, GetCallback onComplete) {
 //        long tid = next_tid++;
 //        Request request = new Request(tid, [onComplete](std::shared_ptr<net::Message> res) {
 //            //todo: parse message and call onComplete
@@ -64,9 +92,9 @@ namespace kdml {
 //        std::shared_ptr<net::Message> find_node_message = std::make_shared<net::FindQuery>(owner.id, tid, key);
 //        send_RPC(dest, find_node_message);
 //        requests.insert(std::make_pair(tid, request));
-    }
+        }
 
-    void Network::send_find_value(mp::uint256_t key, NodeInfo dest, GetCallback onComplete) {
+        void Network::send_find_value(mp::uint256_t key, NodeInfo dest, GetCallback onComplete) {
 //        long tid = next_tid++;
 //        Request request = new Request(tid, [onComplete](std::shared_ptr<net::Message> res) {
 //            //todo: parse message and call onComplete
@@ -74,9 +102,9 @@ namespace kdml {
 //        std::shared_ptr<net::Message> find_value_message = std::make_shared<net::FindQuery>(owner.id, tid, key);
 //        send_RPC(dest, find_value_message);
 //        requests.insert(std::make_pair(tid, request));
-    }
+        }
 
-    void Network::send_store(mp::uint256_t key, NodeInfo dest) {
+        void Network::send_store(mp::uint256_t key, NodeInfo dest) {
 //        long tid = next_tid++;
 //        Request request = new Request(tid, [](std::shared_ptr<net::Message> res) {
 //            //empty callback
@@ -84,9 +112,9 @@ namespace kdml {
 //        std::shared_ptr<net::Message> store_message = std::make_shared<net::StoreQuery>(owner.id, tid, key, value);
 //        send_RPC(dest, store_message);
 //        requests.insert(std::make_pair(tid, request));
-    }
+        }
 
-    void Network::send_RPC(NodeInfo dest, std::shared_ptr<net::Message> message) {
+        void Network::send_RPC(NodeInfo dest, std::shared_ptr<net::Message> message) {
 //        std::string ip_addr = dest.getIpAddr();
 //        unsigned short port = dest.port;
 //
@@ -105,5 +133,6 @@ namespace kdml {
 //        }
 //
 //        socket.send_to(buf.data(), receiverEndpoint);
+        }
     }
 }
