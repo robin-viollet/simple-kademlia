@@ -13,13 +13,11 @@ namespace kdml {
 
         //todo: don't we only need callback?
 
-        NodeInfo dest;
         uint32_t tid;
         std::string msg;
-        std::function<void(std::shared_ptr<kdml::net::Message> req)> onDone;
+        std::function<void(std::shared_ptr<kdml::net::ResponseMessage> req)> onDone;
 
-        Request(NodeInfo dest, uint32_t tid, std::function<void(std::shared_ptr<kdml::net::Message> req)> onDone) {
-            this->dest = dest;
+        Request(uint32_t tid, std::function<void(std::shared_ptr<kdml::net::ResponseMessage> req)> onDone) {
             this->tid = tid;
             this->onDone = onDone;
         }

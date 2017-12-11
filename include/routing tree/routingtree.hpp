@@ -53,7 +53,7 @@ namespace kdml {
             return getTreeNode(root, node_id, 255);
         }
 
-        int getClosestNodes(std::vector<NodeInfo*>& nodes, int desired_num, int num, mp::uint256_t key,
+        int getClosestNodes(std::vector<NodeInfo>& nodes, int desired_num, int num, mp::uint256_t key,
                              RoutingTreeNode *treeNode, uint16_t bit_index) {
 
             if (num == desired_num) return num;
@@ -79,8 +79,8 @@ namespace kdml {
             return num;
         }
 
-        std::vector<NodeInfo*> getClosestNodes(int num, mp::uint256_t key) {
-            std::vector<NodeInfo*> closest;
+        std::vector<NodeInfo> getClosestNodes(int num, mp::uint256_t key) {
+            std::vector<NodeInfo> closest;
             getClosestNodes(closest, num, 0, key, root, 255);
             return closest;
         }
@@ -94,17 +94,17 @@ namespace kdml {
 
         // Return k nodes from tree node, and if not enough keep getting more from parent
         // Unless < k in whole tree in which case returns all nodes it knows about
-        std::vector<NodeInfo*> getKClosestNodes(mp::uint256_t key) {
+        std::vector<NodeInfo> getKClosestNodes(mp::uint256_t key) {
             //todo: make k in kbucket global config?
             return getClosestNodes(k, key);
         }
 
-        std::vector<NodeInfo*> getAClosestNodes(int a, mp::uint256_t key) {
+        std::vector<NodeInfo> getAClosestNodes(int a, mp::uint256_t key) {
             return getClosestNodes(a, key);
         }
 
-        bool insertNode(NodeInfo *node) {
-            mp::uint256_t node_id = node->id;
+        bool insertNode(NodeInfo node) {
+            mp::uint256_t node_id = node.id;
             RoutingTreeNode *treeNode = getTreeNode(node_id);
             kBucket *bucket = treeNode->bucket;
             bool success = bucket->insertNode(node);

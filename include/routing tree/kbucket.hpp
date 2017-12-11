@@ -18,7 +18,7 @@ namespace kdml {
 
     class kBucket {
 
-        std::list<NodeInfo*> contacts;
+        std::list<NodeInfo> contacts;
         mp::uint256_t prefix;
         uint16_t tree_level;
 
@@ -29,7 +29,7 @@ namespace kdml {
             this->tree_level = tree_level;
         }
 
-        bool insertNode(NodeInfo *node) {
+        bool insertNode(NodeInfo node) {
             if (contacts.size() < k) {
                 contacts.push_back(node);
                 return true;
@@ -46,8 +46,8 @@ namespace kdml {
         void splitNodes(kBucket *new_bucket) {
             auto i = contacts.begin();
             while (i != contacts.end()) {
-                NodeInfo *node = *i;
-                if (new_bucket->rangeContainsId(node->id)) {
+                NodeInfo node = *i;
+                if (new_bucket->rangeContainsId(node.id)) {
                     new_bucket->insertNode(node);
                     i = contacts.erase(i);
                 } else {
@@ -70,11 +70,11 @@ namespace kdml {
         // adds num_nodes to vector or if has less than num_nodes,
         // adds all contacts to vector.
         // Returns how many nodes added.
-        int getNodes(std::vector<NodeInfo*>& nodes, int num_nodes) {
+        int getNodes(std::vector<NodeInfo>& nodes, int num_nodes) {
             int num_added = 0;
             auto i = contacts.begin();
             for (; i != contacts.end() && num_added < num_nodes; i++) {
-                NodeInfo *node = *i;
+                NodeInfo node = *i;
                 nodes.push_back(node);
                 num_added++;
             }

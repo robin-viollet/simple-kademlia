@@ -13,11 +13,11 @@ namespace kdml {
     namespace net {
 
         class FindValueResponse : public ResponseMessage {
-        protected:
+
+        public:
             bool found{};
             Nodes data;
 
-        public:
             FindValueResponse(mp::uint256_t id, uint32_t tid, bool found, Nodes nodes)
                     : ResponseMessage(std::move(id), tid, QueryType::FIND_VALUE),
                       found(found), data(std::move(nodes)) {}

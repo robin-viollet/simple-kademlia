@@ -8,6 +8,7 @@
 #include <thread>
 #include <messages/responseMessage.hpp>
 #include <messages/queryMessage.hpp>
+#include <queue>
 
 namespace kdml {
 
@@ -30,8 +31,8 @@ namespace kdml {
 
         std::thread ioThread;
 
-        void handleMessage(std::shared_ptr<net::Message> msg, NodeInfo* sender);
-        void handleQuery(std::shared_ptr<net::QueryMessage> msg, NodeInfo* sender);
+        void handleMessage(std::shared_ptr<net::Message> msg, NodeInfo sender);
+        void handleQuery(std::shared_ptr<net::QueryMessage> msg, NodeInfo sender);
         void handleResponse(std::shared_ptr<net::ResponseMessage> msg);
 
         //map of get/put request ids -> callback for get, put requests
@@ -40,7 +41,11 @@ namespace kdml {
         void probePeers(Nodes endpoints);
         Nodes resolveEndpoint(const NodeInfo& ep);
 
-//        void refreshBuckets(RoutingTree::iterator startBucket);
+        //todo: map of key -> dynamic priority queue for node lookup, callback
+        std::priority_queue<NodeInfo, std::vector<NodeInfo>, bool(*)(NodeInfo, NodeInfo)> *k_nodes_queue;
+        GetCallback callback;
+        int responses_waiting = 0;
+        void find_node_callback(std::vector<NodeInfo > k_closest_nodes, boost::multiprecision::uint256_t key);
 
     public:
         explicit Protocol(const NodeInfo& owner);
@@ -50,9 +55,12 @@ namespace kdml {
         void bootstrap(const NodeInfo& peer);
         void join();
 
-        void lookup_node(boost::multiprecision::uint256_t key);
+        void node_lookup(boost::multiprecision::uint256_t key, GetCallback callback);
         void handleReceive(const boost::system::error_code& error,
                            std::size_t /*bytes_transferred*/);
+
+
+
     };
 }
 

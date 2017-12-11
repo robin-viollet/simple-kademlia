@@ -14,10 +14,9 @@ namespace kdml {
 
         class FindNodeResponse : public ResponseMessage {
 
-        protected:
+        public:
             Nodes nodes{};
 
-        public:
             explicit FindNodeResponse(mp::uint256_t id, uint32_t tid, Nodes nodes)
                     : ResponseMessage(std::move(id), tid, QueryType::FIND_NODE),
                       nodes(std::move(nodes)) {}
@@ -54,6 +53,8 @@ namespace kdml {
                 mp::import_bits(id, idVec.begin(), idVec.end());
                 construct(id, tid, nodes);
             }
+
+
         };
     }
 }

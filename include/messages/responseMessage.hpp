@@ -13,7 +13,6 @@ namespace kdml {
 
         class ResponseMessage : public Message {
         protected:
-            mp::uint256_t id{};
             QueryType qtype{};
         public:
             explicit ResponseMessage(mp::uint256_t id, uint32_t tid,
@@ -36,6 +35,8 @@ namespace kdml {
                 ar(cereal::base_class<Message>(this), qtype, idVec);
                 mp::import_bits(id, idVec.begin(), idVec.end());
             }
+
+            mp::uint256_t id{};
         };
     }
 }
