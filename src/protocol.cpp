@@ -83,9 +83,8 @@ namespace kdml {
                     probePeers(endpoints);
                 } else {
                     auto bucket = routingTable.insertNode(ep);
-//                    doLookUp(owner.id, [bucket](Nodes& found) {
-//                        refreshBuckets(bucket);
-//                    });
+                    node_lookup(owner.id, [bucket](Nodes found) {
+                    }, false);
                 }
             };
 
