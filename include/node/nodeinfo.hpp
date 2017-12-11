@@ -31,8 +31,10 @@ namespace kdml {
             struct sockaddr_in sa;
             inet_pton(AF_INET, ip.c_str(), &(sa.sin_addr));
             ipAddr = sa.sin_addr.s_addr;
+
+            std::string ipPort = ip + std::to_string(p);
             std::vector<unsigned char> hash(32);
-            picosha2::hash256(ip.begin(), ip.end(), hash.begin(), hash.end());
+            picosha2::hash256(ipPort.begin(), ipPort.end(), hash.begin(), hash.end());
             mp::import_bits(id, hash.begin(), hash.end());
         }
 

@@ -30,6 +30,7 @@ namespace kdml {
     }
 
     void Protocol::async_get(mp::uint256_t key, kdml::GetCallback callback) {
+//        nodeLookUp
     }
 
     void Protocol::join() {
@@ -53,7 +54,7 @@ namespace kdml {
 //    }
 
     void Protocol::handleReceive(const boost::system::error_code& error,
-                                         std::size_t /*bytes_transferred*/) {
+                                 std::size_t /*bytes_transferred*/) {
 
         if (error == asio::error::operation_aborted) {
             return;
@@ -97,7 +98,7 @@ namespace kdml {
                 }
             };
 
-            network->send_ping(ep, onPong);
+            network->send_ping(&ep, onPong);
         }
     }
 

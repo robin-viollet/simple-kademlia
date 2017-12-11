@@ -7,6 +7,10 @@
 #include <messages/storeQuery.hpp>
 #include <boost/asio/ip/udp.hpp>
 #include <boost/bind.hpp>
+#include <messages/pingResponse.hpp>
+#include <messages/findNodeResponse.hpp>
+#include <messages/storeResponse.hpp>
+#include <messages/findValueResponse.hpp>
 #include "network.hpp"
 #include "protocol.hpp"
 
@@ -64,80 +68,95 @@ namespace kdml {
         }
 
         void Network::send_ping_response(NodeInfo *dest, uint32_t tid) {
+            std::shared_ptr<Message> pong = std::make_shared<PingResponse>(owner.id, tid);
+            send_RPC(dest, pong);
         }
 
         void Network::send_find_node_response(NodeInfo *dest, Nodes nodes, uint32_t tid) {
-
+            std::shared_ptr<Message> findNodeRes = std::make_shared<FindNodeResponse>(owner.id, tid, nodes);
+            send_RPC(dest, findNodeRes);
         }
 
         void Network::send_store_response(NodeInfo *dest, bool success, uint32_t tid) {
-
+            std::shared_ptr<Message> storeRes = std::make_shared<StoreResponse>(owner.id, tid, success);
+            send_RPC(dest, storeRes);
         }
 
         void Network::send_find_value_response(NodeInfo *dest, bool success, Nodes result, uint32_t tid) {
-
+            std::shared_ptr<Message> valueRes = std::make_shared<FindValueResponse>(owner.id, tid, success, result);
+            send_RPC(dest, valueRes);
         }
 
 
-        void Network::send_ping(NodeInfo dest, SimpleCallback onPong) {
-//        long tid = next_tid++;
+        void Network::send_ping(NodeInfo* dest, SimpleCallback onPong) {
+            long tid = next_tid++;
+            std::shared_ptr<net::Message> ping_message = std::make_shared<net::PingQuery>(owner.id, tid);
+            send_RPC(dest, ping_message);
 //        Request request = new Request(tid, [onPong](std::shared_ptr<net::Message> res) {
 //            //todo: parse message and call onPong
 //        });
-//        std::shared_ptr<net::Message> ping_message = std::make_shared<net::PingQuery>(owner.id, tid);
-//        send_RPC(dest, ping_message);
 //        requests.insert(std::make_pair(tid, request));
         }
 
-        void Network::send_find_node(mp::uint256_t key, NodeInfo dest, GetCallback onComplete) {
-//        long tid = next_tid++;
+        void Network::send_find_node(mp::uint256_t key, NodeInfo* dest, GetCallback onComplete) {
+            long tid = next_tid++;
+            std::shared_ptr<net::Message> find_node_message = std::make_shared<net::FindQuery>(owner.id, tid, key, QueryType::FIND_NODE);
+            send_RPC(dest, find_node_message);
 //        Request request = new Request(tid, [onComplete](std::shared_ptr<net::Message> res) {
 //            //todo: parse message and call onComplete
 //        });
-//        std::shared_ptr<net::Message> find_node_message = std::make_shared<net::FindQuery>(owner.id, tid, key);
-//        send_RPC(dest, find_node_message);
 //        requests.insert(std::make_pair(tid, request));
         }
 
-        void Network::send_find_value(mp::uint256_t key, NodeInfo dest, GetCallback onComplete) {
-//        long tid = next_tid++;
+        void Network::send_find_value(mp::uint256_t key, NodeInfo* dest, GetCallback onComplete) {
+            long tid = next_tid++;
+            std::shared_ptr<net::Message> find_value_message = std::make_shared<net::FindQuery>(owner.id, tid, key, QueryType::FIND_VALUE);
+            send_RPC(dest, find_value_message);
 //        Request request = new Request(tid, [onComplete](std::shared_ptr<net::Message> res) {
 //            //todo: parse message and call onComplete
 //        });
-//        std::shared_ptr<net::Message> find_value_message = std::make_shared<net::FindQuery>(owner.id, tid, key);
-//        send_RPC(dest, find_value_message);
 //        requests.insert(std::make_pair(tid, request));
         }
 
-        void Network::send_store(mp::uint256_t key, NodeInfo dest) {
-//        long tid = next_tid++;
+        void Network::send_store(mp::uint256_t key, NodeInfo* dest) {
+            long tid = next_tid++;
+            std::shared_ptr<net::Message> store_message = std::make_shared<net::StoreQuery>(owner.id, tid, key, owner);
+            send_RPC(dest, store_message);
 //        Request request = new Request(tid, [](std::shared_ptr<net::Message> res) {
 //            //empty callback
 //        });
-//        std::shared_ptr<net::Message> store_message = std::make_shared<net::StoreQuery>(owner.id, tid, key, value);
-//        send_RPC(dest, store_message);
 //        requests.insert(std::make_pair(tid, request));
         }
 
-        void Network::send_RPC(NodeInfo dest, std::shared_ptr<net::Message> message) {
-//        std::string ip_addr = dest.getIpAddr();
-//        unsigned short port = dest.port;
-//
-//        boost::asio::io_service ioService;
-//        udp::resolver resolver(ioService);
-//        udp::resolver::query query(udp::v4(), ip_addr, std::to_string(port));
-//        udp::endpoint receiverEndpoint = *resolver.resolve(query);
-//        udp::socket socket(ioService);
-//        socket.open(udp::v4());
-//
-//        boost::asio::streambuf buf;
-//        {
-//            std::ostream os(&buf);
-//            cereal::BinaryOutputArchive oarchive(os);
-//            oarchive(message);
-//        }
-//
-//        socket.send_to(buf.data(), receiverEndpoint);
+        void Network::send_RPC(NodeInfo* dest, std::shared_ptr<net::Message> message) {
+            boost::asio::ip::udp::endpoint destination(
+                    boost::asio::ip::address::from_string(dest->getIpAddr()), dest->port);
+
+            boost::asio::streambuf sb;
+            {
+                std::ostream os(&sb);
+                cereal::BinaryOutputArchive oarchive(os);
+                oarchive(message);
+            }
+
+            socket.async_send_to(sb.data(), destination,
+                                 boost::bind(&Network::handleSend, this, message,
+                                             boost::asio::placeholders::error,
+                                             boost::asio::placeholders::bytes_transferred));
+        }
+
+        void Network::handleSend(std::shared_ptr<Message> msg, const boost::system::error_code& error, std::size_t) {
+            if (error) {
+                std::cerr << "Error sending message: " << *msg << std::endl;
+            } else if (msg->getMessageType() == MessageType::RESPONSE) {
+                std::cout << "Sent response: " << *msg << std::endl;
+                // do nothing
+            } else if (msg->getMessageType() == MessageType::QUERY){
+                std::cout << "Sent query: " << *msg << std::endl;
+                // TODO
+                // construct requests prior to send_RPC and pass them to send_RPC and handleSend
+                // insert request into map
+            }
         }
     }
 }
