@@ -47,8 +47,8 @@ namespace kdml {
             Request getRequest(uint32_t tid);
 
             void send_ping(NodeInfo dest, SimpleCallback onPong);
-            void send_find_node(mp::uint256_t key, NodeInfo dest, FindNodeCallback onComplete);
-            void send_find_value(mp::uint256_t key, NodeInfo dest, FindValueCallback onComplete, GetCallback callback);
+            void send_find_node(mp::uint256_t key, NodeInfo dest);
+            void send_find_value(mp::uint256_t key, NodeInfo dest);
             void send_store(mp::uint256_t key, NodeInfo dest);
 
             void send_ping_response(NodeInfo dest, uint32_t tid);

@@ -9,6 +9,8 @@
 #include <messages/findQuery.hpp>
 #include <messages/storeQuery.hpp>
 #include <queue>
+#include <messages/findValueResponse.hpp>
+#include <messages/findNodeResponse.hpp>
 #include "protocol.hpp"
 #include "network.hpp"
 
@@ -128,10 +130,6 @@ namespace kdml {
         }
     }
 
-    bool node_closer(boost::multiprecision::uint256_t key, NodeInfo a, NodeInfo b) {
-        return (key ^ a.id) < (key ^ b.id);
-    }
-
     void find_value_callback(Nodes nodes, boost::multiprecision::uint256_t key, bool found, GetCallback callback) {
         if(found) {
             callback(nodes);
@@ -141,67 +139,93 @@ namespace kdml {
     }
 
     void Protocol::async_get(mp::uint256_t key, kdml::GetCallback callback) {
-        Nodes a_closest_nodes = routingTable.getAClosestNodes(a, key);
-        for(NodeInfo node : a_closest_nodes) {
-            network->send_find_value(key, node, find_value_callback, callback);
-        }
+//        Nodes a_closest_nodes = routingTable.getAClosestNodes(a, key);
+//        for(NodeInfo node : a_closest_nodes) {
+//            network->send_find_value(key, node, find_value_callback, callback);
+//        }
+        node_lookup(key, callback, true);
     }
 
     void Protocol::async_store(boost::multiprecision::uint256_t key, NodeInfo value) {
-        Nodes a_closest_nodes = routingTable.getAClosestNodes(a, key);
-        for(NodeInfo node : a_closest_nodes) {
+//        Nodes a_closest_nodes = routingTable.getAClosestNodes(a, key);
+//        for(NodeInfo node : a_closest_nodes) {
+//            network->send_store(key, node);
+//        }
+        node_lookup(key, NULL, false);
+    }
+
+    void Protocol::store_callback(boost::multiprecision::uint256_t key, Nodes nodes) {
+        for(NodeInfo node : nodes) {
             network->send_store(key, node);
         }
     }
 
+
     /*
      * Pick a closest nodes to key from bucket, send asynchronous FIND_NODE rpcs to each.
-     * Pass heap allocated queue to each
      */
-    void Protocol::node_lookup(boost::multiprecision::uint256_t key, kdml::GetCallback callback) {
-//        this->callback = callback;
-//        std::vector<NodeInfo> a_closest_nodes = routingTable.getAClosestNodes(a, key);
-//        auto key_comp = [key](NodeInfo a, NodeInfo b) {
-//            // Distance of node from key defined as XOR value.
-//            return node_closer(key, a, b);
-//        };
-//        k_nodes_queue = new std::priority_queue<NodeInfo, std::vector<NodeInfo>, decltype(key_comp)>(key_comp);
-//        std::priority_queue<NodeInfo> *queue = (std::priority_queue<NodeInfo> *)k_nodes_queue;
-//        for(NodeInfo node : a_closest_nodes) {
-//            queue->push(node);
-//            responses_waiting++;
-//            network->send_find_node(key, node, find_node_callback);
-//        }
-//        if (responses_waiting == 0) {
-//            callback(a_closest_nodes);
-//        }
+    void Protocol::node_lookup(boost::multiprecision::uint256_t key, kdml::GetCallback callback, bool findValue) {
+
+        std::vector<NodeInfo> a_closest_nodes = routingTable.getAClosestNodes(a, key);
+        RequestState request_state;
+        request_state.key = key;
+        request_state.findValue = findValue;
+        request_state.callback = callback;
+        for(NodeInfo node : a_closest_nodes) {
+            NodeInfoWrapper node_wrapper(key, node);
+            request_state.k_closest_nodes.push(node_wrapper);
+            request_state.responses_waiting++;
+            if (request_state.findValue) {
+                network->send_find_value(key, node);
+            } else {
+                network->send_find_node(key, node);
+            }
+
+        }
+        lookups[key] = request_state;
+
     }
 
-    void find_node_callback(std::vector<NodeInfo> k_closest_nodes, boost::multiprecision::uint256_t key,
-                                      kdml::GetCallback callback, void *k_nodes_queue) {
-//        std::priority_queue<NodeInfo> *queue = (std::priority_queue<NodeInfo> *)k_nodes_queue;
-//        responses_waiting--;
-//        NodeInfo closest = queue->top();
-//        // todo: This could send rpcs to all k nodes, not just a nodes. Need to set nodeinfo's as queried.
-//        // also need to check which nodes have responded
-//        for(NodeInfo node : k_closest_nodes) {
-//            if (node_closer(key, node, closest)) {
-//                queue->push(node);
-//                responses_waiting++;
-//                network->send_find_node(key, node, find_node_callback);
-//            }
-//        }
-//
-//        // If all nodes queried have responded, return k_closest_nodes.
-//        // todo: stop waiting after amount of time?
-//        if (responses_waiting == 0) {
-//            std::vector<NodeInfo> k_nodes;
-//            while(!queue->empty() && k_nodes.size() < k) {
-//                k_nodes.push_back(queue->top());
-//                queue->pop();
-//            }
-//            callback(k_nodes);
-//        }
+    void Protocol::node_lookup_callback(std::vector<NodeInfo> k_closest_nodes,
+                                        boost::multiprecision::uint256_t key) {
+
+        auto it = lookups.find(key);
+        if (it != lookups.end()) {
+            RequestState request_state = it->second;
+            request_state.responses_waiting--;
+            NodeInfoWrapper closest = request_state.k_closest_nodes.top();
+            for(NodeInfo node : k_closest_nodes) {
+                NodeInfoWrapper node_wrapper(key, node);
+                //todo: fix
+//                request_state.unqueried_nodes.push(node);
+                request_state.k_closest_nodes.push(node_wrapper);
+                if (request_state.node_comp(node_wrapper, closest)) {
+                    request_state.responses_waiting++;
+                    if (request_state.findValue) {
+                        network->send_find_value(key, node);
+                    } else {
+                        network->send_find_node(key, node);
+                    }
+                }
+            }
+            if (request_state.responses_waiting == 0) {
+                std::vector<NodeInfo> k_nodes;
+                while(!request_state.k_closest_nodes.empty() && k_nodes.size() < k) {
+                    k_nodes.push_back(request_state.k_closest_nodes.top().node);
+                    request_state.k_closest_nodes.pop();
+                }
+                if (request_state.findValue) {
+                    request_state.callback(k_nodes);
+                } else {
+                    //store query
+                    store_callback(key, k_nodes);
+                }
+
+            }
+
+        } else {
+            //todo:
+        }
 
     }
 
@@ -265,7 +289,18 @@ namespace kdml {
             std::cerr << "Received alien message" << *msg << std::endl;
         } else {
             Request outstanding = network->getRequest(msg->getTid());
-            outstanding.onDone(msg);
+//            outstanding.onDone(msg);
+            auto it = lookups.find(outstanding.key);
+            if (it != lookups.end()) {
+                RequestState request_state = it->second;
+                if (outstanding.findValue) {
+                    net::FindValueResponse &value_res = dynamic_cast<net::FindValueResponse&>(*msg);
+                    node_lookup_callback(value_res.data, outstanding.key);
+                } else {
+                    net::FindNodeResponse &find_res = dynamic_cast<net::FindNodeResponse&>(*msg);
+                    node_lookup_callback(find_res.nodes, outstanding.key);
+                }
+            }
         }
     }
 }

@@ -99,25 +99,28 @@ namespace kdml {
             requests.insert(std::make_pair(tid, request));
         }
 
-        void Network::send_find_node(mp::uint256_t key, NodeInfo dest, FindNodeCallback onComplete) {
+        void Network::send_find_node(mp::uint256_t key, NodeInfo dest) {
             long tid = next_tid++;
             std::shared_ptr<net::Message> find_node_message = std::make_shared<net::FindQuery>(owner.id, tid, key, QueryType::FIND_NODE);
             send_RPC(dest, find_node_message);
-            Request request(tid, [onComplete](std::shared_ptr<net::ResponseMessage> res) {
+            Request request(tid, [](std::shared_ptr<net::ResponseMessage> res) {
                 FindNodeResponse &node_res = dynamic_cast<net::FindNodeResponse&>(*res);
-                onComplete(node_res.nodes, node_res.id);
+//                onComplete(node_res.nodes, node_res.id);
             });
+            request.key = key;
             requests.insert(std::make_pair(tid, request));
         }
 
-        void Network::send_find_value(mp::uint256_t key, NodeInfo dest, FindValueCallback onComplete, GetCallback callback) {
+        void Network::send_find_value(mp::uint256_t key, NodeInfo dest) {
             long tid = next_tid++;
             std::shared_ptr<net::Message> find_value_message = std::make_shared<net::FindQuery>(owner.id, tid, key, QueryType::FIND_VALUE);
             send_RPC(dest, find_value_message);
-            Request request(tid, [onComplete, callback](std::shared_ptr<net::ResponseMessage> res) {
+            Request request(tid, [](std::shared_ptr<net::ResponseMessage> res) {
                 FindValueResponse &value_res = dynamic_cast<net::FindValueResponse&>(*res);
-                onComplete(value_res.data, value_res.id, value_res.found, callback);
+//                onComplete(value_res.data, value_res.id, value_res.found, callback);
             });
+            request.key = key;
+            request.findValue = true;
             requests.insert(std::make_pair(tid, request));
         }
 
@@ -128,6 +131,7 @@ namespace kdml {
             Request request(tid, [](std::shared_ptr<net::Message> res) {
                 //empty callback
             });
+            request.key = key;
             requests.insert(std::make_pair(tid, request));
         }
 

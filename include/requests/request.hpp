@@ -14,10 +14,13 @@ namespace kdml {
         //todo: don't we only need callback?
 
         uint32_t tid;
+        boost::multiprecision::uint256_t key;
+        bool findValue{false};
         std::string msg;
         std::function<void(std::shared_ptr<kdml::net::ResponseMessage> req)> onDone;
 
-        Request(uint32_t tid, std::function<void(std::shared_ptr<kdml::net::ResponseMessage> req)> onDone) {
+        Request(uint32_t tid,
+                std::function<void(std::shared_ptr<kdml::net::ResponseMessage> req)> onDone) {
             this->tid = tid;
             this->onDone = onDone;
         }
