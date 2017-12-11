@@ -46,20 +46,13 @@ namespace kdml {
         explicit Protocol(const NodeInfo& owner);
 
         void async_get(boost::multiprecision::uint256_t key, kdml::GetCallback callback);
-<<<<<<< HEAD
 
-=======
-//        void lookup_node(boost::multiprecision::uint256_t key);
->>>>>>> 2cffb1903fe9732a68e1ea7e9eba531c3c3c390d
         void bootstrap(const NodeInfo& peer);
         void join();
 
-<<<<<<< HEAD
         void lookup_node(boost::multiprecision::uint256_t key);
-=======
         void handleReceive(const boost::system::error_code& error,
                            std::size_t /*bytes_transferred*/);
->>>>>>> 2cffb1903fe9732a68e1ea7e9eba531c3c3c390d
     };
 }
 
