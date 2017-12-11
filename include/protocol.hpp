@@ -16,7 +16,7 @@ namespace kdml {
         class Network;
     }
     // number of concurrent lookups in node lookup
-    const int a = 3;
+    const int a = 1;
 
     struct NodeInfoWrapper {
         boost::multiprecision::uint256_t key;
