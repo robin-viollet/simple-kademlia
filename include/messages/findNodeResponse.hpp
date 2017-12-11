@@ -6,11 +6,8 @@
 #define SIMPLE_KADEMLIA_FINDNODERESPONSE_HPP
 
 #include "responseMessage.hpp"
-#include <cereal/types/polymorphic.hpp>
 #include <cereal/archives/binary.hpp>
-#include <cereal/types/vector.hpp>
 #include <callbacks.hpp>
-#include <utility>
 
 namespace kdml {
     namespace net {
@@ -18,10 +15,10 @@ namespace kdml {
         class FindNodeResponse : public ResponseMessage {
 
         protected:
-            Nodes nodes;
+            Nodes nodes{};
 
         public:
-            FindNodeResponse(mp::uint256_t id, uint32_t tid, Nodes nodes)
+            explicit FindNodeResponse(mp::uint256_t id, uint32_t tid, Nodes nodes)
                     : ResponseMessage(std::move(id), tid, QueryType::FIND_NODE),
                       nodes(std::move(nodes)) {}
 
@@ -61,6 +58,12 @@ namespace kdml {
     }
 }
 
+namespace cereal {
+    template <class Archive>
+    struct specialize<Archive, kdml::net::FindNodeResponse, cereal::specialization::member_serialize> {};
+    // cereal no longer has any ambiguity when serializing
+}
+
 CEREAL_REGISTER_TYPE(kdml::net::FindNodeResponse);
 
-#endif SIMPLE_KADEMLIA_FINDNODERESPONSE_HPP
+#endif //SIMPLE_KADEMLIA_FINDNODERESPONSE_HPP

@@ -5,15 +5,15 @@
 #ifndef SIMPLE_KADEMLIA_QUERYMESSAGE_HPP
 #define SIMPLE_KADEMLIA_QUERYMESSAGE_HPP
 
-#include "message.hpp"
-
+#include "messages/message.hpp"
+#include <cereal/types/vector.hpp>
 
 namespace kdml {
     namespace net {
 
         class QueryMessage : public Message {
         protected:
-            mp::uint256_t id{};
+            boost::multiprecision::uint256_t id{};
             QueryType qtype{};
         public:
             explicit QueryMessage(mp::uint256_t id, uint32_t tid,
@@ -39,6 +39,12 @@ namespace kdml {
         };
 
     }
+}
+
+namespace cereal {
+    template <class Archive>
+    struct specialize<Archive, kdml::net::QueryMessage, cereal::specialization::member_load_save> {};
+    // cereal no longer has any ambiguity when serializing MyDerived
 }
 
 #endif //SIMPLE_KADEMLIA_QUERYMESSAGE_HPP

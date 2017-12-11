@@ -42,7 +42,7 @@ namespace kdml {
     // TODO Asynchronous bootstrap (queue messages while bootstrapping).
     void Protocol::bootstrap(const NodeInfo& peer) {
         Nodes endpoints = resolveEndpoint(peer);
-        probePeers(endpoints);
+        probePeers(std::move(endpoints));
     }
 
     void Protocol::startReceive() {
@@ -78,7 +78,7 @@ namespace kdml {
         startReceive();
     }
 
-    void Protocol::probePeers(Nodes& endpoints) {
+    void Protocol::probePeers(Nodes endpoints) {
         if (endpoints.empty()) {
             throw "Failed to find peers";       // TODO Custom error codes.
         } else {
@@ -89,11 +89,11 @@ namespace kdml {
                 if (failure) {
                     probePeers(endpoints);
                 } else {
-                    NodeInfo* endpoint = new NodeInfo(ep);
+                    auto* endpoint = new NodeInfo(ep);
                     auto bucket = routingTable.insertNode(endpoint);
-                    doLookUp(owner.id, [bucket](Nodes& found) {
-                        refreshBuckets(bucket);
-                    });
+//                    doLookUp(owner.id, [bucket](Nodes& found) {
+//                        refreshBuckets(bucket);
+//                    });
                 }
             };
 
@@ -127,18 +127,18 @@ namespace kdml {
 
         while (resolvedEndpoints != end) {
             auto ep = (*resolvedEndpoints).endpoint();
-            endpoints.emplace_back({ep.address().to_string(), ep.port()});
+            endpoints.emplace_back(NodeInfo{ep.address().to_string(), ep.port()});
             resolvedEndpoints++;
         }
         return endpoints;
     }
 
-    void Protocol::refreshBuckets(RoutingTree::iterator start) {
-        for (; start != routingTable.end(); start++) {
-            mp::uint256_t randomId = routingTable.randomId(start);
-            doLookUp(randomId, [](...){});
-        }
-    }
+//    void Protocol::refreshBuckets(RoutingTree::iterator start) {
+//        for (; start != routingTable.end(); start++) {
+//            mp::uint256_t randomId = routingTable.randomId(start);
+//            doLookUp(randomId, [](...){});
+//        }
+//    }
 
     void Protocol::handleMessage(std::shared_ptr<net::Message> msg) {
         switch (msg->getMessageType()) {
@@ -157,14 +157,12 @@ namespace kdml {
         }
     }
 
-    void lookup_node(boost::multiprecision::uint256_t key) {
-        std::vector<NodeInfo*> a_closest_nodes = routingTable.getAClosestNodes(a, key);
-        std::priority_queue
-        uint256_t distance = key ^ node_id;
-
-    }
-
-    //todo: define RPC callbacks
+//    void lookup_node(boost::multiprecision::uint256_t key) {
+//        std::vector<NodeInfo*> a_closest_nodes = routingTable.getAClosestNodes(a, key);
+//        std::priority_queue
+//        uint256_t distance = key ^ node_id;
+//
+//    }
 
     void Protocol::handleQueryMessage(std::shared_ptr<net::QueryMessage> msg) {
         NodeInfo* peer = new NodeInfo(remote.address().to_string(), remote.port());
@@ -179,10 +177,11 @@ namespace kdml {
                 auto query = std::dynamic_pointer_cast<net::FindQuery>(msg);
                 auto nodes = routingTable.getKClosestNodes(query->getTarget());
                 Nodes result;
+                result.resize(nodes.size());
+
                 std::transform(nodes.begin(), nodes.end(), result.begin(),
-                               [](NodeInfo* node) {
-                                   return *node;
-                               });
+                               [](NodeInfo* node) { return *node; }
+                );
 
                 network.send_find_node_response(*peer, result, msg->getTid());
                 break;

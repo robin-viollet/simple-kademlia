@@ -5,15 +5,14 @@
 #ifndef SIMPLE_KADEMLIA_PINGQUERY_HPP
 #define SIMPLE_KADEMLIA_PINGQUERY_HPP
 
+
 #include "queryMessage.hpp"
-#include <cereal/types/polymorphic.hpp>
-#include <cereal/archives/binary.hpp>
+#include "cereal/archives/binary.hpp"
 
 namespace kdml {
     namespace net {
 
         class PingQuery : public QueryMessage {
-
         public:
             PingQuery(mp::uint256_t id, uint32_t tid)
                     : QueryMessage(std::move(id), tid, QueryType::PING) {}
@@ -42,6 +41,12 @@ namespace kdml {
             }
         };
     }
+}
+
+namespace cereal {
+    template <class Archive>
+    struct specialize<Archive, kdml::net::PingQuery, cereal::specialization::member_serialize> {};
+    // cereal no longer has any ambiguity when serializing
 }
 
 CEREAL_REGISTER_TYPE(kdml::net::PingQuery);

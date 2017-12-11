@@ -6,16 +6,15 @@
 #define SIMPLE_KADEMLIA_FINDQUERY_HPP
 
 #include "queryMessage.hpp"
-#include <cereal/types/polymorphic.hpp>
 #include <cereal/archives/binary.hpp>
-#include <utility>
+#include <cereal/types/vector.hpp>
 
 namespace kdml {
     namespace net {
 
         class FindQuery : public QueryMessage {
         protected:
-            mp::uint256_t targetId;
+            mp::uint256_t targetId{};
         public:
             FindQuery(mp::uint256_t id, uint32_t tid, mp::uint256_t target,
                       QueryType qtype)
@@ -33,7 +32,7 @@ namespace kdml {
             mp::uint256_t getTarget() { return targetId; }
 
             template<class Archive>
-            void save(Archive& ar) {
+            void save(Archive& ar) const {
                 std::vector<unsigned char> targetVec(32);
                 mp::export_bits(targetId, std::back_inserter(targetVec), 8);
                 ar(cereal::base_class<QueryMessage>(this), targetVec);
@@ -52,8 +51,8 @@ namespace kdml {
                 MessageType mtype{};
                 QueryType qtype{};
                 std::vector<unsigned char> idVec(32);
-                mp::uint256_t id;
                 std::vector<unsigned char> targetVec(32);
+                mp::uint256_t id;
                 mp::uint256_t target;
 
                 ar(tid, mtype, qtype, idVec, targetVec);
@@ -63,6 +62,12 @@ namespace kdml {
             }
         };
     }
+}
+
+namespace cereal {
+    template <class Archive>
+    struct specialize<Archive, kdml::net::FindQuery, cereal::specialization::member_load_save> {};
+    // cereal no longer has any ambiguity when serializing
 }
 
 CEREAL_REGISTER_TYPE(kdml::net::FindQuery);

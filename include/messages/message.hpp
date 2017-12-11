@@ -5,10 +5,14 @@
 #ifndef SIMPLE_KADEMLIA_MESSAGE_HPP
 #define SIMPLE_KADEMLIA_MESSAGE_HPP
 
+// Boost earlier 1.60 doesn't have import_bits/export_bits
+#if BOOST_VERSION < 106000
+#include "aux/cppint_import_export.hpp"
+#endif
 
-#include "node/nodeinfo.hpp"
-#include "messages/messageType.hpp"
+#include "messageType.hpp"
 #include <cereal/types/memory.hpp>
+
 
 namespace kdml {
     namespace net {
@@ -18,9 +22,9 @@ namespace kdml {
         class Message {
         protected:
             uint32_t tid;
-            MessageType mtype;
+            MessageType mtype{};
         public:
-            Message(uint32_t tid, MessageType type) : tid(tid), mtype(type) {}
+            explicit Message(uint32_t tid, MessageType type) : tid(tid), mtype(type) {}
 
             MessageType getMessageType() const { return mtype; }
             uint32_t getTid() const { return tid; }

@@ -15,7 +15,7 @@ file(GLOB SOURCE_FILES
         )
 
 add_library(simpleKademlia ${SOURCE_FILES} )
-add_executable(tests test/serialization.cpp test/testNetworking.cpp)
-target_link_libraries(tests simpleKademlia ${Boost_LIBRARIES} -lpthread)
-
-enable_testing()
+add_executable(serialization test/serialization.cpp)
+add_executable(networking test/testNetworking.cpp)
+target_link_libraries(serialization simpleKademlia ${Boost_LIBRARIES} -lpthread)
+target_link_libraries(networking simpleKademlia ${Boost_LIBRARIES} -lpthread)

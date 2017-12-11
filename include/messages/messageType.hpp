@@ -5,6 +5,8 @@
 #ifndef SIMPLE_KADEMLIA_MESSAGETYPE_HPP
 #define SIMPLE_KADEMLIA_MESSAGETYPE_HPP
 
+#include <iostream>
+
 namespace kdml {
     namespace net {
         enum class MessageType {

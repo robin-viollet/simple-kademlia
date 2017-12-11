@@ -5,8 +5,8 @@
 #ifndef SIMPLE_KADEMLIA_RESPONSEMESSAGE_HPP
 #define SIMPLE_KADEMLIA_RESPONSEMESSAGE_HPP
 
-#include "message.hpp"
-
+#include "messages/message.hpp"
+#include <cereal/types/vector.hpp>
 
 namespace kdml {
     namespace net {
@@ -20,7 +20,6 @@ namespace kdml {
                                      QueryType type)
                     : Message(tid, MessageType::RESPONSE),
                       id(std::move(id)),qtype(type){}
-
 
             QueryType getQueryType() const { return qtype; }
 
@@ -38,8 +37,14 @@ namespace kdml {
                 mp::import_bits(id, idVec.begin(), idVec.end());
             }
         };
-
     }
 }
+
+namespace cereal {
+    template <class Archive>
+    struct specialize<Archive, kdml::net::ResponseMessage, cereal::specialization::member_load_save> {};
+    // cereal no longer has any ambiguity when serializing MyDerived
+}
+
 
 #endif //SIMPLE_KADEMLIA_RESPONSEMESSAGE_HPP

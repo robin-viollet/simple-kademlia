@@ -6,7 +6,6 @@
 #define SIMPLE_KADEMLIA_PINGRESPONSE_HPP
 
 #include "responseMessage.hpp"
-#include <cereal/types/polymorphic.hpp>
 #include <cereal/archives/binary.hpp>
 
 namespace kdml {
@@ -43,6 +42,13 @@ namespace kdml {
         };
     }
 }
+
+namespace cereal {
+    template <class Archive>
+    struct specialize<Archive, kdml::net::PingResponse, cereal::specialization::member_serialize> {};
+    // cereal no longer has any ambiguity when serializing
+}
+
 
 CEREAL_REGISTER_TYPE(kdml::net::PingResponse);
 

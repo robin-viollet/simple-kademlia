@@ -6,11 +6,8 @@
 #define SIMPLE_KADEMLIA_FINDVALUERESPONSE_HPP
 
 #include "responseMessage.hpp"
-#include <cereal/types/polymorphic.hpp>
 #include <cereal/archives/binary.hpp>
-#include <cereal/types/vector.hpp>
 #include <callbacks.hpp>
-#include <utility>
 
 namespace kdml {
     namespace net {
@@ -21,9 +18,9 @@ namespace kdml {
             Nodes data;
 
         public:
-            FindValueResponse(mp::uint256_t id, uint32_t tid, bool foundVal, Nodes nodes)
+            FindValueResponse(mp::uint256_t id, uint32_t tid, bool found, Nodes nodes)
                     : ResponseMessage(std::move(id), tid, QueryType::FIND_VALUE),
-                      data(std::move(nodes)) {}
+                      found(found), data(std::move(nodes)) {}
 
             void print(std::ostream& os) const override {
                 os << "[" << mtype << "][" << qtype << "][TID="
@@ -63,6 +60,12 @@ namespace kdml {
     }
 }
 
+namespace cereal {
+    template <class Archive>
+    struct specialize<Archive, kdml::net::FindValueResponse, cereal::specialization::member_serialize> {};
+    // cereal no longer has any ambiguity when serializing
+}
+
 CEREAL_REGISTER_TYPE(kdml::net::FindValueResponse);
 
-#endif SIMPLE_KADEMLIA_FINDVALUERESPONSE_HPP
+#endif //SIMPLE_KADEMLIA_FINDVALUERESPONSE_HPP

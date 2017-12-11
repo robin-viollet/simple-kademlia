@@ -5,10 +5,9 @@
 #ifndef SIMPLE_KADEMLIA_STOREQUERY_HPP
 #define SIMPLE_KADEMLIA_STOREQUERY_HPP
 
-#include "queryMessage.hpp"
-#include <cereal/types/polymorphic.hpp>
 #include <cereal/archives/binary.hpp>
-#include <utility>
+#include <node/nodeinfo.hpp>
+#include <messages/queryMessage.hpp>
 
 namespace kdml {
     namespace net {
@@ -16,8 +15,8 @@ namespace kdml {
         class StoreQuery : public QueryMessage {
 
         protected:
-            mp::uint256_t key;
-            NodeInfo val;
+            mp::uint256_t key{};
+            NodeInfo val{};
 
         public:
             StoreQuery(mp::uint256_t id, uint32_t tid, mp::uint256_t key, NodeInfo val)
@@ -34,7 +33,7 @@ namespace kdml {
             NodeInfo getVal() { return val; }
 
             template<class Archive>
-            void save(Archive& ar) {
+            void save(Archive& ar) const {
                 std::vector<unsigned char> keyVec(32);
                 mp::export_bits(key, std::back_inserter(keyVec), 8);
                 ar(cereal::base_class<QueryMessage>(this), keyVec, val);
@@ -53,18 +52,24 @@ namespace kdml {
                 MessageType mtype{};
                 QueryType qtype{};
                 std::vector<unsigned char> idVec(32);
-                mp::uint256_t id;
                 std::vector<unsigned char> keyVec(32);
+                mp::uint256_t id;
                 mp::uint256_t key;
                 NodeInfo val;
 
-                ar(tid, mtype, qtype, id, keyVec, val);
+                ar(tid, mtype, qtype, idVec, keyVec, val);
                 mp::import_bits(id, idVec.begin(), idVec.end());
                 mp::import_bits(key, keyVec.begin(), keyVec.end());
                 construct(id, tid, key, val);
             }
         };
     }
+}
+
+namespace cereal {
+    template <class Archive>
+    struct specialize<Archive, kdml::net::StoreQuery, cereal::specialization::member_load_save> {};
+    // cereal no longer has any ambiguity when serializing
 }
 
 CEREAL_REGISTER_TYPE(kdml::net::StoreQuery);

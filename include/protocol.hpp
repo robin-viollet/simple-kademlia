@@ -40,20 +40,19 @@ namespace kdml {
 
         //map of get/put request ids -> callback for get, put requests
         //copy node lookup procedure passing pointer to heap allocated queue, request id
-        //
 
-        void probePeers(Nodes& endpoints);
+        void probePeers(Nodes endpoints);
         boost::system::error_code populateBuf(boost::asio::streambuf& sb);
         Nodes resolveEndpoint(const NodeInfo& ep);
 
-        void refreshBucketss(RoutingTree::iterator startBucket);
+//        void refreshBuckets(RoutingTree::iterator startBucket);
 
     public:
         explicit Protocol(const NodeInfo& owner);
 
         void async_get(boost::multiprecision::uint256_t key, kdml::GetCallback callback);
 
-        void lookup_node(boost::multiprecision::uint256_t key);
+//        void lookup_node(boost::multiprecision::uint256_t key);
 
         void bootstrap(const NodeInfo& peer);
 
@@ -62,4 +61,4 @@ namespace kdml {
     };
 }
 
-#endif SIMPLE_KADEMLIA_PROTOCOL_HPP
+#endif //SIMPLE_KADEMLIA_PROTOCOL_HPP

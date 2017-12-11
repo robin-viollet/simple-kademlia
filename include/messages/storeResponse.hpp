@@ -6,7 +6,6 @@
 #define SIMPLE_KADEMLIA_STORERESPONSE_HPP
 
 #include "responseMessage.hpp"
-#include <cereal/types/polymorphic.hpp>
 #include <cereal/archives/binary.hpp>
 
 namespace kdml {
@@ -39,7 +38,7 @@ namespace kdml {
                 QueryType qtype{};
                 std::vector<unsigned char> idVec(32);
                 mp::uint256_t id;
-                bool success;
+                bool success{};
 
                 ar(tid, mtype, qtype, idVec, success);
                 mp::import_bits(id, idVec.begin(), idVec.end());
@@ -47,6 +46,12 @@ namespace kdml {
             }
         };
     }
+}
+
+namespace cereal {
+    template <class Archive>
+    struct specialize<Archive, kdml::net::StoreResponse, cereal::specialization::member_serialize> {};
+    // cereal no longer has any ambiguity when serializing
 }
 
 CEREAL_REGISTER_TYPE(kdml::net::StoreResponse);
