@@ -204,7 +204,7 @@ namespace kdml {
 //                request_state.unqueried_nodes.push(node);
                 request_state.k_closest_nodes.push(node_wrapper);
                 if (request_state.node_comp(node_wrapper, closest)) {
-                    std::cout << "Node is closer" << std::endl;
+                    std::cout << "Node is closer " << (node_wrapper.key ^ node_wrapper.node.id) << " vs. " << (closest.key ^ closest.node.id) << std::endl;
                     request_state.responses_waiting++;
                     if (request_state.findValue) {
                         network->send_find_value(key, node);
