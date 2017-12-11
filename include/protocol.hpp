@@ -52,12 +52,11 @@ namespace kdml {
 
         void async_get(boost::multiprecision::uint256_t key, kdml::GetCallback callback);
 
-//        void lookup_node(boost::multiprecision::uint256_t key);
-
         void bootstrap(const NodeInfo& peer);
 
         void join();
 
+        void lookup_node(boost::multiprecision::uint256_t key);
     };
 }
 

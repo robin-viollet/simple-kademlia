@@ -47,13 +47,13 @@ namespace kdml {
 
 
     void Network::send_ping(NodeInfo dest, SimpleCallback onPong) {
-//        long tid = next_tid++;
-//        Request request = new Request(tid, [onPong](std::shared_ptr<net::Message> res) {
+        long tid = next_tid++;
+        Request request(dest, tid, [onPong](std::shared_ptr<net::Message> res) {
 //            //todo: parse message and call onPong
-//        });
-//        std::shared_ptr<net::Message> ping_message = std::make_shared<net::PingQuery>(owner.id, tid);
-//        send_RPC(dest, ping_message);
-//        requests.insert(std::make_pair(tid, request));
+        });
+        std::shared_ptr<net::Message> ping_message = std::make_shared<net::PingQuery>(owner.id, tid);
+        send_RPC(dest, ping_message);
+        requests.insert(std::make_pair(tid, request));
     }
 
     void Network::send_find_node(mp::uint256_t key, NodeInfo dest, GetCallback onComplete) {
