@@ -7,15 +7,20 @@
 
 #include <node/nodeinfo.hpp>
 #include <messages/message.hpp>
+#include <messages/responseMessage.hpp>
 
 namespace kdml {
-    using rpc_callback = std::function<void(std::shared_ptr<net::Message> req)>;
+    namespace mp = boost::multiprecision;
     using Nodes = std::vector<NodeInfo>;
+
+    using Callback = std::function<void()>;
+    using SimpleCallback = std::function<void(bool)>;
+
     using GetCallback = std::function<void(Nodes)>;
-    using FindNodeCallback = std::function<void(Nodes, boost::multiprecision::uint256_t)>;
-    using FindValueCallback = std::function<void(Nodes, boost::multiprecision::uint256_t, bool found, GetCallback callback)>;
-    using SimpleCallback = std::function<void(bool failure)>;
-    //todo: findvalue callback returns either list of nodes or value
+    using FindNodeCallback = std::function<void(Nodes, mp::uint256_t)>;
+    using FindValueCallback = std::function<void(Nodes, mp::uint256_t, bool, GetCallback)>;
+
+    using completeReqCallback = std::function<void(std::shared_ptr<net::ResponseMessage>, bool)>;
 }
 
 #endif //SIMPLE_KADEMLIA_CALLBACKS_HPP

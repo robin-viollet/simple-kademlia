@@ -15,8 +15,6 @@ namespace kdml {
     namespace net {
         class Network;
     }
-    // number of concurrent lookups in node lookup
-    const int a = 1;
 
     struct NodeInfoWrapper {
         boost::multiprecision::uint256_t key;
@@ -79,9 +77,14 @@ namespace kdml {
         void node_lookup_callback(std::vector<NodeInfo> k_closest_nodes,
                                             boost::multiprecision::uint256_t key, bool found);
 
+        void find_value_callback(Nodes nodes, bool found, GetCallback callback);
         void store_callback(boost::multiprecision::uint256_t key, Nodes nodes);
 
     public:
+
+        // number of concurrent lookups in node lookup
+        static const int A = 3;
+
         explicit Protocol(const NodeInfo& owner);
 
         void async_get(boost::multiprecision::uint256_t key, kdml::GetCallback callback);
