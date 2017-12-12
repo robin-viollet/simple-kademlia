@@ -16,7 +16,7 @@ namespace kdml {
         class Network;
     }
     // number of concurrent lookups in node lookup
-    const int a = 3;
+    const int a = 1;
 
     struct NodeInfoWrapper {
         boost::multiprecision::uint256_t key;
@@ -31,7 +31,8 @@ namespace kdml {
     class NodeComparison {
     public:
         bool operator() (NodeInfoWrapper a, NodeInfoWrapper b) {
-            return (a.key ^ a.node.id) < (b.key ^ b.node.id);
+            //todo: check if this is correct order
+            return (a.key ^ a.node.id) > (b.key ^ b.node.id);
         }
     };
 
@@ -44,6 +45,8 @@ namespace kdml {
         bool node_comp (NodeInfoWrapper a, NodeInfoWrapper b) {
             return (a.key ^ a.node.id) < (b.key ^ b.node.id);
         }
+
+        std::set<boost::multiprecision::uint256_t> queried_nodes;
 
         std::priority_queue<NodeInfoWrapper, std::vector<NodeInfoWrapper>, NodeComparison> k_closest_nodes;
 
@@ -74,7 +77,7 @@ namespace kdml {
         std::map<boost::multiprecision::uint256_t, RequestState> lookups;
 
         void node_lookup_callback(std::vector<NodeInfo> k_closest_nodes,
-                                            boost::multiprecision::uint256_t key);
+                                            boost::multiprecision::uint256_t key, bool found);
 
         void store_callback(boost::multiprecision::uint256_t key, Nodes nodes);
 

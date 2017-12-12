@@ -29,7 +29,21 @@ namespace kdml {
             this->tree_level = tree_level;
         }
 
+        bool contains_node(NodeInfo node) {
+            auto i = contacts.begin();
+            while (i != contacts.end()) {
+                NodeInfo other_node = *i;
+                if (other_node.id == node.id) {
+                    return true;
+                }
+                i++;
+            }
+            return false;
+        }
+
         bool insertNode(NodeInfo node) {
+            if (contains_node(node)) return true;
+
             if (contacts.size() < k) {
                 contacts.push_back(node);
                 return true;

@@ -82,12 +82,14 @@ namespace kdml {
                 if (failure) {
                     probePeers(endpoints);
                 } else {
-                    auto bucket = routingTable.insertNode(ep);
-                    node_lookup(owner.id, [bucket](Nodes found) {
+                    std::cout << "Kademlia: Probe Peers found: " << ep.getIpAddr() << std::endl;
+//                    auto bucket = routingTable.insertNode(ep);
+                    node_lookup(owner.id, [/*bucket*/](Nodes found) {
                     }, false);
                 }
             };
 
+            auto bucket = routingTable.insertNode(ep);
             network->send_ping(ep, onPong);
         }
     }
@@ -117,12 +119,12 @@ namespace kdml {
                 break;
             }
             case net::MessageType::QUERY: {
-                routingTable.insertNode(sender);
+//                routingTable.insertNode(sender);
                 handleQuery(std::dynamic_pointer_cast<net::QueryMessage>(msg), sender);
                 break;
             }
             case net::MessageType::RESPONSE: {
-                routingTable.insertNode(sender);
+//                routingTable.insertNode(sender);
                 handleResponse(std::dynamic_pointer_cast<net::ResponseMessage>(msg));
                 break;
             }
@@ -131,31 +133,30 @@ namespace kdml {
 
     void find_value_callback(Nodes nodes, boost::multiprecision::uint256_t key, bool found, GetCallback callback) {
         if(found) {
+            std::cout << "found a node with ip addr " << (*nodes.begin()).getIpAddr() << std::endl;
             callback(nodes);
         } else {
+            std::cout << "did not find a node" << std::endl;
             callback(std::vector<NodeInfo>());
         }
     }
 
     void Protocol::async_get(mp::uint256_t key, kdml::GetCallback callback) {
-//        Nodes a_closest_nodes = routingTable.getAClosestNodes(a, key);
-//        for(NodeInfo node : a_closest_nodes) {
-//            network->send_find_value(key, node, find_value_callback, callback);
-//        }
         node_lookup(key, callback, true);
     }
 
     void Protocol::async_store(boost::multiprecision::uint256_t key, NodeInfo value) {
-//        Nodes a_closest_nodes = routingTable.getAClosestNodes(a, key);
-//        for(NodeInfo node : a_closest_nodes) {
-//            network->send_store(key, node);
-//        }
+        std::cout << "Kademlia: Async Store called with key: " << key << std::endl;
         node_lookup(key, NULL, false);
     }
 
     void Protocol::store_callback(boost::multiprecision::uint256_t key, Nodes nodes) {
+
         for(NodeInfo node : nodes) {
+            std::cout << "Storing value in node with ip addr " << node.ipAddr << " and id " << node.id
+                      << " for key " << key << std::endl;
             network->send_store(key, node);
+            break; //only store on one node for now
         }
     }
 
@@ -171,6 +172,8 @@ namespace kdml {
         request_state.findValue = findValue;
         request_state.callback = callback;
         for(NodeInfo node : a_closest_nodes) {
+            std::cout << "Looked up node with ip addr " << node.ipAddr << " and id " << node.id
+                      << " for key " << key << std::endl;
             NodeInfoWrapper node_wrapper(key, node);
             request_state.k_closest_nodes.push(node_wrapper);
             request_state.responses_waiting++;
@@ -186,27 +189,43 @@ namespace kdml {
     }
 
     void Protocol::node_lookup_callback(std::vector<NodeInfo> k_closest_nodes,
-                                        boost::multiprecision::uint256_t key) {
+                                        boost::multiprecision::uint256_t key, bool found) {
 
         auto it = lookups.find(key);
         if (it != lookups.end()) {
-            RequestState request_state = it->second;
+
+            RequestState& request_state = it->second;
+
+            if (found) {
+                if (!request_state.findValue) {
+                    std::cout << "that's super weird" << std::endl;
+                }
+                find_value_callback(k_closest_nodes, key, found, request_state.callback);
+                lookups.erase ( it, lookups.end() );
+                return;
+            }
+
             request_state.responses_waiting--;
             NodeInfoWrapper closest = request_state.k_closest_nodes.top();
             for(NodeInfo node : k_closest_nodes) {
-                NodeInfoWrapper node_wrapper(key, node);
-                //todo: fix
-//                request_state.unqueried_nodes.push(node);
-                request_state.k_closest_nodes.push(node_wrapper);
-                if (request_state.node_comp(node_wrapper, closest)) {
-                    request_state.responses_waiting++;
-                    if (request_state.findValue) {
-                        network->send_find_value(key, node);
-                    } else {
-                        network->send_find_node(key, node);
-                    }
+                auto it = request_state.queried_nodes.find(node.id);
+                if (it != request_state.queried_nodes.end()) {
+                    std::cout << "already queried node" << std::endl;
+                    continue;
                 }
+                NodeInfoWrapper node_wrapper(key, node);
+                request_state.k_closest_nodes.push(node_wrapper);
+//                if (request_state.node_comp(node_wrapper, closest)) {     // TODO: check each WAVE if k closest nodes has changed
+                request_state.responses_waiting++;
+                request_state.queried_nodes.insert(node.id);
+                if (request_state.findValue) {
+                    network->send_find_value(key, node);
+                } else {
+                    network->send_find_node(key, node);
+                }
+//                }
             }
+            std::cout << "responses waiting " << request_state.responses_waiting << std::endl;
             if (request_state.responses_waiting == 0) {
                 std::vector<NodeInfo> k_nodes;
                 while(!request_state.k_closest_nodes.empty() && k_nodes.size() < k) {
@@ -214,16 +233,17 @@ namespace kdml {
                     request_state.k_closest_nodes.pop();
                 }
                 if (request_state.findValue) {
-                    request_state.callback(k_nodes);
+                    find_value_callback(k_nodes, key, found, request_state.callback);
                 } else {
                     //store query
                     store_callback(key, k_nodes);
                 }
 
+                lookups.erase ( it, lookups.end() );
             }
 
         } else {
-            //todo:
+            std::cout << "got response for something already found" << std::endl;
         }
 
     }
@@ -258,11 +278,7 @@ namespace kdml {
                 if (found) {
                     result = value->second;
                 } else {
-                    auto nodes = routingTable.getKClosestNodes(query->getTarget());
-                    std::transform(nodes.begin(), nodes.end(), result.begin(),
-                                   [](NodeInfo node) {
-                                       return node;
-                                   });
+                    result = routingTable.getKClosestNodes(query->getTarget());
                 }
                 network->send_find_value_response(sender, found, result,
                                                   msg->getTid());
@@ -294,10 +310,10 @@ namespace kdml {
                 RequestState request_state = it->second;
                 if (outstanding.findValue) {
                     net::FindValueResponse &value_res = dynamic_cast<net::FindValueResponse&>(*msg);
-                    node_lookup_callback(value_res.data, outstanding.key);
+                    node_lookup_callback(value_res.data, outstanding.key, value_res.found);
                 } else {
                     net::FindNodeResponse &find_res = dynamic_cast<net::FindNodeResponse&>(*msg);
-                    node_lookup_callback(find_res.nodes, outstanding.key);
+                    node_lookup_callback(find_res.nodes, outstanding.key, false);
                 }
             }
         }

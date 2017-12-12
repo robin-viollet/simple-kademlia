@@ -39,6 +39,7 @@ namespace kdml {
 
         RoutingTreeNode *root;
         mp::uint256_t m_node_id;
+        int num_contacts;
 
         RoutingTreeNode *getTreeNode(RoutingTreeNode *treeNode, mp::uint256_t node_id, uint16_t bit_index) {
             if (treeNode -> isLeaf) return treeNode;
@@ -88,6 +89,7 @@ namespace kdml {
     public:
 
         RoutingTree(mp::uint256_t node_id) {
+            num_contacts = 0;
             m_node_id = node_id;
             root = new RoutingTreeNode(new kBucket(0, 0), NULL);
         }
@@ -100,10 +102,12 @@ namespace kdml {
         }
 
         std::vector<NodeInfo> getAClosestNodes(int a, mp::uint256_t key) {
+            std::cout << num_contacts << std::endl;
             return getClosestNodes(a, key);
         }
 
         bool insertNode(NodeInfo node) {
+            std::cout << "Inserting node with ip addr " << node.getIpAddr() << std::endl;
             mp::uint256_t node_id = node.id;
             RoutingTreeNode *treeNode = getTreeNode(node_id);
             kBucket *bucket = treeNode->bucket;

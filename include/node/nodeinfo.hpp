@@ -42,7 +42,7 @@ namespace kdml {
         template<class Archive>
         void load(Archive& ar) {
             ar(ipAddr, port);
-            std::string ip = getIpAddr();
+            std::string ip = getIpAddr() + std::to_string(port);
             std::vector<unsigned char> hash(32);
             picosha2::hash256(ip.begin(), ip.end(), hash.begin(), hash.end());
             mp::import_bits(id, hash.begin(), hash.end());
