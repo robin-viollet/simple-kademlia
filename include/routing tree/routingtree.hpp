@@ -98,7 +98,7 @@ namespace kdml {
         // Unless < k in whole tree in which case returns all nodes it knows about
         std::vector<NodeInfo> getKClosestNodes(mp::uint256_t key) {
             //todo: make k in kbucket global config?
-            return getClosestNodes(kBucket::K, key);
+            return getClosestNodes(kdml::K, key);
         }
 
         std::vector<NodeInfo> getAClosestNodes(int a, mp::uint256_t key) {

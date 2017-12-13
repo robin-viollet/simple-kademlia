@@ -209,16 +209,16 @@ namespace kdml {
             NodeInfoWrapper node_wrapper = *it;
 
             // Keep track if k closest nodes have responded
-            auto it = request_state.responded_nodes.find(node_wrapper.node.id);
-            if (it != request_state.responded_nodes.end()) {
+            auto responded_it = request_state.responded_nodes.find(node_wrapper.node.id);
+            if (responded_it != request_state.responded_nodes.end()) {
                 responded++;
             } else {
                 k_responded = false;
             }
 
             // Do not query if node has already been queried
-            auto it = request_state.queried_nodes.find(node_wrapper.node.id);
-            if (it != request_state.queried_nodes.end()) {
+            auto queried_it = request_state.queried_nodes.find(node_wrapper.node.id);
+            if (queried_it != request_state.queried_nodes.end()) {
                 continue;
             }
 
