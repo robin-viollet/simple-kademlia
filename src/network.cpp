@@ -105,7 +105,7 @@ namespace kdml {
                                                         QueryType::FIND_NODE);
 
             auto onDone = [](std::shared_ptr<net::ResponseMessage>, bool failure) {
-                // TODO: callbacks or handle in protocol.cpp?
+                // now handled in protocol.cpp
             };
             Request req(key, false, onDone);
 
@@ -121,7 +121,7 @@ namespace kdml {
                                                           QueryType::FIND_VALUE);
 
             auto onDone = [](std::shared_ptr<net::ResponseMessage>, bool failure) {
-                // TODO: callbacks or handle in protocol.cpp?
+                // now handled in protocol.cpp
             };
             Request req(key, true, onDone);
 
@@ -136,7 +136,7 @@ namespace kdml {
             store = std::make_shared<net::StoreQuery>(owner.id, tid, key, owner);
 
             auto onDone = [](std::shared_ptr<net::ResponseMessage>, bool failure) {
-                // TODO: callbacks or handle in protocol.cpp?
+                // now handled in protocol.cpp
             };
             Request req(key, false, onDone);
 

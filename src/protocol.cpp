@@ -91,7 +91,7 @@ namespace kdml {
                 } else {
                     auto bucket = routingTable.insertNode(ep);
                     node_lookup(owner.id, [bucket](Nodes found) {
-                        // TODO refresh buckets after bucket
+                        // TODO: refresh buckets after bucket
                     }, false, false);
                 }
             };
@@ -166,71 +166,87 @@ namespace kdml {
         request_state.callback = callback;
         for(NodeInfo node : a_closest_nodes) {
             NodeInfoWrapper node_wrapper(key, node);
-            request_state.k_closest_nodes.push(node_wrapper);
+            request_state.k_closest_nodes.insert(node_wrapper);
             request_state.responses_waiting++;
             if (request_state.findValue) {
                 network->send_find_value(key, node);
             } else {
                 network->send_find_node(key, node);
             }
-
         }
         lookups[key] = request_state;
     }
 
-    void Protocol::node_lookup_callback(Nodes k_closest_nodes,
+    //TODO: Nodes that fail to respond should be removed from consideration unless they respond
+
+    void Protocol::node_lookup_callback(mp::uint256_t sender, RequestState request_state, Nodes k_nodes,
                                         mp::uint256_t key, bool found) {
 
-        auto lookup_it = lookups.find(key);
-        if (lookup_it != lookups.end()) {
+        request_state.responses_waiting--;
+        request_state.responded_nodes.insert(sender);
 
-            RequestState& request_state = lookup_it->second;
+        if (found) {
+            assert(request_state.findValue);
+            // If found, k_nodes will be the list of values associated with key
+            find_value_callback(k_nodes, found, request_state.callback);
+            lookups.erase(lookups.find(key), lookups.end());
+            return;
+        }
 
-            if (found) {
-                assert(request_state.findValue);
-                find_value_callback(k_closest_nodes, found, request_state.callback);
-                lookups.erase(lookup_it, lookups.end());
-                return;
+        for(NodeInfo node : k_nodes) {
+            NodeInfoWrapper node_wrapper(key, node);
+            request_state.k_closest_nodes.insert(node_wrapper);
+        }
+
+        // Query alpha more nodes
+        // Terminates when has queried and heard responses from k closest nodes
+        int responded = 0;
+        bool k_responded = true;
+        for (auto it=request_state.k_closest_nodes.begin(); it!=request_state.k_closest_nodes.end(); ++it) {
+            if (request_state.responses_waiting >= ALPHA) break;
+            if (k_responded && responded >= kdml::K) break;
+
+            NodeInfoWrapper node_wrapper = *it;
+
+            // Keep track if k closest nodes have responded
+            auto it = request_state.responded_nodes.find(node_wrapper.node.id);
+            if (it != request_state.responded_nodes.end()) {
+                responded++;
+            } else {
+                k_responded = false;
             }
 
-            request_state.responses_waiting--;
-            NodeInfoWrapper closest = request_state.k_closest_nodes.top();
-            for(NodeInfo node : k_closest_nodes) {
-                auto it = request_state.queried_nodes.find(node.id);
-                // Do not query if node has already been queried
-                if (it != request_state.queried_nodes.end()) {
-                    continue;
-                }
-                NodeInfoWrapper node_wrapper(key, node);
-                request_state.k_closest_nodes.push(node_wrapper);
-                request_state.responses_waiting++;
-                request_state.queried_nodes.insert(node.id);
-                if (request_state.findValue) {
-                    network->send_find_value(key, node);
-                } else {
-                    network->send_find_node(key, node);
-                }
+            // Do not query if node has already been queried
+            auto it = request_state.queried_nodes.find(node_wrapper.node.id);
+            if (it != request_state.queried_nodes.end()) {
+                continue;
             }
 
-            if (request_state.responses_waiting == 0) {
-                Nodes k_nodes;
-                while(!request_state.k_closest_nodes.empty() && k_nodes.size() < kBucket::K) {
-                    k_nodes.push_back(request_state.k_closest_nodes.top().node);
-                    request_state.k_closest_nodes.pop();
-                }
-                if (request_state.findValue) {
-                    find_value_callback(k_nodes, found, request_state.callback);
-                } else if (request_state.store){
-                    store_callback(key, k_nodes);
-                } else {
-                    std::cout << "Completed lookup for bootstrapping" << std::endl;
-                }
+            request_state.responses_waiting++;
+            request_state.queried_nodes.insert(node_wrapper.node.id);
+            if (request_state.findValue) {
+                network->send_find_value(key, node_wrapper.node);
+            } else {
+                network->send_find_node(key, node_wrapper.node);
+            }
+        }
 
-                lookups.erase ( lookup_it, lookups.end() );
+        if (request_state.responses_waiting == 0) {
+            Nodes k_closest_nodes_list;
+            for (auto it=request_state.k_closest_nodes.begin(); it!=request_state.k_closest_nodes.end()
+                    && k_closest_nodes_list.size() < kdml::K; ++it) {
+                NodeInfoWrapper node_wrapper = *it;
+                k_closest_nodes_list.push_back(node_wrapper.node);
+            }
+            if (request_state.findValue) {
+                find_value_callback(k_closest_nodes_list, found, request_state.callback);
+            } else if (request_state.store){
+                store_callback(key, k_closest_nodes_list);
+            } else {
+                std::cout << "Completed lookup for bootstrapping" << std::endl;
             }
 
-        } else {
-            std::cout << "Got response for nonexistent nodes lookup" << std::endl;
+            lookups.erase (lookups.find(key), lookups.end());
         }
     }
 
@@ -296,11 +312,13 @@ namespace kdml {
                 RequestState request_state = it->second;
                 if (outstanding.findValue) {
                     auto value_res = std::dynamic_pointer_cast<net::FindValueResponse>(msg);
-                    node_lookup_callback(value_res->data, outstanding.key, value_res->found);
+                    node_lookup_callback(msg->id, request_state, value_res->data, outstanding.key, value_res->found);
                 } else {
                     auto find_res = std::dynamic_pointer_cast<net::FindNodeResponse>(msg);
-                    node_lookup_callback(find_res->nodes, outstanding.key, false);
+                    node_lookup_callback(msg->id, request_state, find_res->nodes, outstanding.key, false);
                 }
+            } else {
+                std::cout << "Got response for nonexistent nodes lookup" << std::endl;
             }
         }
     }

@@ -14,6 +14,7 @@
 namespace kdml {
 
     namespace mp = boost::multiprecision;
+    static const int K = 20;
 
     class kBucket {
 
@@ -23,8 +24,6 @@ namespace kdml {
         uint16_t tree_level;
 
     public:
-
-        static const int K = 1;
 
         kBucket(mp::uint256_t prefix, uint16_t tree_level) {
             this->prefix = std::move(prefix);

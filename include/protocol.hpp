@@ -26,10 +26,14 @@ namespace kdml {
         }
     };
 
+    static bool node_comp (NodeInfoWrapper a, NodeInfoWrapper b) {
+        return (a.key ^ a.node.id) < (b.key ^ b.node.id);
+    }
+
     class NodeComparison {
     public:
         bool operator() (NodeInfoWrapper a, NodeInfoWrapper b) {
-            return (a.key ^ a.node.id) < (b.key ^ b.node.id);
+            return node_comp(a, b);
         }
     };
 
@@ -40,13 +44,10 @@ namespace kdml {
         bool findValue {false};
         bool store {false};
 
-        bool node_comp (NodeInfoWrapper a, NodeInfoWrapper b) {
-            return (a.key ^ a.node.id) < (b.key ^ b.node.id);
-        }
-
         std::set<boost::multiprecision::uint256_t> queried_nodes;
+        std::set<boost::multiprecision::uint256_t> responded_nodes;
 
-        std::priority_queue<NodeInfoWrapper, std::vector<NodeInfoWrapper>, NodeComparison> k_closest_nodes;
+        std::set<NodeInfoWrapper, NodeComparison> k_closest_nodes;
     };
 
     class Protocol {
@@ -72,8 +73,8 @@ namespace kdml {
         //map of keys -> request state for lookup procedure
         std::map<boost::multiprecision::uint256_t, RequestState> lookups;
 
-        void node_lookup_callback(std::vector<NodeInfo> k_closest_nodes,
-                                            boost::multiprecision::uint256_t key, bool found);
+        void Protocol::node_lookup_callback(mp::uint256_t sender, RequestState request_state, Nodes k_nodes,
+                                            mp::uint256_t key, bool found);
 
         void find_value_callback(Nodes nodes, bool found, GetCallback callback);
         void store_callback(boost::multiprecision::uint256_t key, Nodes nodes);
