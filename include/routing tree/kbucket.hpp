@@ -14,15 +14,17 @@
 namespace kdml {
 
     namespace mp = boost::multiprecision;
-    const int k = 20;
 
     class kBucket {
+
 
         std::list<NodeInfo> contacts;
         mp::uint256_t prefix;
         uint16_t tree_level;
 
     public:
+
+        static const int K = 1;
 
         kBucket(mp::uint256_t prefix, uint16_t tree_level) {
             this->prefix = std::move(prefix);
@@ -44,7 +46,7 @@ namespace kdml {
         bool insertNode(NodeInfo node) {
             if (contains_node(node)) return true;
 
-            if (contacts.size() < k) {
+            if (contacts.size() < K) {
                 contacts.push_back(node);
                 return true;
             }

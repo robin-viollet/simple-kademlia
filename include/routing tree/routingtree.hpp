@@ -98,7 +98,7 @@ namespace kdml {
         // Unless < k in whole tree in which case returns all nodes it knows about
         std::vector<NodeInfo> getKClosestNodes(mp::uint256_t key) {
             //todo: make k in kbucket global config?
-            return getClosestNodes(k, key);
+            return getClosestNodes(kBucket::K, key);
         }
 
         std::vector<NodeInfo> getAClosestNodes(int a, mp::uint256_t key) {
@@ -107,7 +107,7 @@ namespace kdml {
         }
 
         bool insertNode(NodeInfo node) {
-            std::cout << "Inserting node with ip addr " << node.getIpAddr() << std::endl;
+            std::cout << "Inserting node " << node.getIpAddr() << ":" << node.port << std::endl;
             mp::uint256_t node_id = node.id;
             RoutingTreeNode *treeNode = getTreeNode(node_id);
             kBucket *bucket = treeNode->bucket;

@@ -11,16 +11,9 @@
 #include <messages/findNodeResponse.hpp>
 #include <messages/storeResponse.hpp>
 #include <messages/findValueResponse.hpp>
+#include <utility>
 #include "network.hpp"
 #include "protocol.hpp"
-
-/* TODO: user passes local IP or we decide?
- * boost::asio::io_service io_service;
- * boost::asio::ip::tcp::resolver resolver(io_service);
- * boost::asio::ip::tcp::resolver::query query(boost::asio::ip::host_name(), "");
- * boost::asio::ip::tcp::resolver::iterator it = resolver.resolve(query);
- * boost::asio::ip::tcp::endpoint endpoint = *it;
- */
 
 namespace kdml {
     namespace net {
@@ -47,9 +40,7 @@ namespace kdml {
             size_t bytesRead = socket.receive_from(buffer, remote, 0, recvError);
             sb.commit(bytesRead);
 
-            if (!recvError) {
-                std::cout << "Read " << bytesRead << " bytes" << std::endl;
-            } else {
+            if (recvError) {
                 std::cout << "Error: " << recvError.message() << std::endl;
             }
             return recvError;
@@ -59,7 +50,7 @@ namespace kdml {
             return {remote.address().to_string(), remote.port()};
         }
 
-        bool Network::containsReq(uint32_t tid) {
+        bool Network::containsRequest(uint32_t tid) {
             return requests.find(tid) != requests.end();
         }
 
@@ -67,73 +58,97 @@ namespace kdml {
             return requests.at(tid);
         }
 
-        void Network::send_ping_response(NodeInfo dest, uint32_t tid) {
+        void Network::removeRequest(uint32_t tid) {
+            requests.erase(tid);
+        }
+
+        void Network::send_ping_response(NodeInfo& dest, uint32_t tid) {
             std::shared_ptr<Message> pong = std::make_shared<PingResponse>(owner.id, tid);
             send_RPC(dest, pong);
         }
 
-        void Network::send_find_node_response(NodeInfo dest, Nodes nodes, uint32_t tid) {
+        void Network::send_find_node_response(NodeInfo& dest, Nodes nodes, uint32_t tid) {
             std::shared_ptr<Message> findNodeRes = std::make_shared<FindNodeResponse>(owner.id, tid, nodes);
             send_RPC(dest, findNodeRes);
         }
 
-        void Network::send_store_response(NodeInfo dest, bool success, uint32_t tid) {
+        void Network::send_store_response(NodeInfo& dest, bool success, uint32_t tid) {
             std::shared_ptr<Message> storeRes = std::make_shared<StoreResponse>(owner.id, tid, success);
             send_RPC(dest, storeRes);
         }
 
-        void Network::send_find_value_response(NodeInfo dest, bool success, Nodes result, uint32_t tid) {
+        void Network::send_find_value_response(NodeInfo& dest, bool success, Nodes result, uint32_t tid) {
             std::shared_ptr<Message> valueRes = std::make_shared<FindValueResponse>(owner.id, tid, success, result);
             send_RPC(dest, valueRes);
         }
 
 
-        void Network::send_ping(NodeInfo dest, SimpleCallback onPong) {
+        void Network::send_ping(NodeInfo& dest, SimpleCallback onPong) {
             long tid = next_tid++;
-            std::shared_ptr<net::Message> ping_message = std::make_shared<net::PingQuery>(owner.id, tid);
-            send_RPC(dest, ping_message);
-            Request request(tid, [onPong](std::shared_ptr<net::ResponseMessage> res) {
-                PingResponse &node_res = dynamic_cast<net::PingResponse&>(*res);
-                onPong(true);
+            std::shared_ptr<net::Message> ping;
+            ping = std::make_shared<net::PingQuery>(owner.id, tid);
+
+            auto onDone = [onPong](std::shared_ptr<net::ResponseMessage>, bool failure) {
+                onPong(failure);
+            };
+            Request req(onDone);
+
+            send_RPC(dest, ping, [this, tid, req]() {
+                requests.insert(std::make_pair(tid, req));
             });
-            requests.insert(std::make_pair(tid, request));
         }
 
-        void Network::send_find_node(mp::uint256_t key, NodeInfo dest) {
+        void Network::send_find_node(mp::uint256_t key, NodeInfo& dest) {
             long tid = next_tid++;
-            std::shared_ptr<net::Message> find_node_message = std::make_shared<net::FindQuery>(owner.id, tid, key, QueryType::FIND_NODE);
-            send_RPC(dest, find_node_message);
-            Request request(tid, [](std::shared_ptr<net::ResponseMessage> res) {
-                FindNodeResponse &node_res = dynamic_cast<net::FindNodeResponse&>(*res);
+            std::shared_ptr<net::Message> find_node;
+            find_node = std::make_shared<net::FindQuery>(owner.id, tid, key,
+                                                        QueryType::FIND_NODE);
+
+            auto onDone = [](std::shared_ptr<net::ResponseMessage>, bool failure) {
+                // TODO: callbacks or handle in protocol.cpp?
+            };
+            Request req(key, false, onDone);
+
+            send_RPC(dest, find_node, [this, tid, req]() {
+                requests.insert(std::make_pair(tid, req));
             });
-            request.key = key;
-            requests.insert(std::make_pair(tid, request));
         }
 
-        void Network::send_find_value(mp::uint256_t key, NodeInfo dest) {
+        void Network::send_find_value(mp::uint256_t key, NodeInfo& dest) {
             long tid = next_tid++;
-            std::shared_ptr<net::Message> find_value_message = std::make_shared<net::FindQuery>(owner.id, tid, key, QueryType::FIND_VALUE);
-            send_RPC(dest, find_value_message);
-            Request request(tid, [](std::shared_ptr<net::ResponseMessage> res) {
-                FindValueResponse &value_res = dynamic_cast<net::FindValueResponse&>(*res);
+            std::shared_ptr<net::Message> find_value;
+            find_value = std::make_shared<net::FindQuery>(owner.id, tid, key,
+                                                          QueryType::FIND_VALUE);
+
+            auto onDone = [](std::shared_ptr<net::ResponseMessage>, bool failure) {
+                // TODO: callbacks or handle in protocol.cpp?
+            };
+            Request req(key, true, onDone);
+
+            send_RPC(dest, find_value, [this, tid, req]() {
+                requests.insert(std::make_pair(tid, req));
             });
-            request.key = key;
-            request.findValue = true;
-            requests.insert(std::make_pair(tid, request));
         }
 
-        void Network::send_store(mp::uint256_t key, NodeInfo dest) {
+        void Network::send_store(mp::uint256_t key, NodeInfo& dest) {
             long tid = next_tid++;
-            std::shared_ptr<net::Message> store_message = std::make_shared<net::StoreQuery>(owner.id, tid, key, owner);
-            send_RPC(dest, store_message);
-            Request request(tid, [](std::shared_ptr<net::Message> res) {
-                //empty callback
+            std::shared_ptr<net::Message> store;
+            store = std::make_shared<net::StoreQuery>(owner.id, tid, key, owner);
+
+            auto onDone = [](std::shared_ptr<net::ResponseMessage>, bool failure) {
+                // TODO: callbacks or handle in protocol.cpp?
+            };
+            Request req(key, false, onDone);
+
+            send_RPC(dest, store, [this, tid, req]() {
+                requests.insert(std::make_pair(tid, req));
             });
-            request.key = key;
-            requests.insert(std::make_pair(tid, request));
         }
 
-        void Network::send_RPC(NodeInfo dest, std::shared_ptr<net::Message> message) {
+        void Network::send_RPC(NodeInfo& dest,
+                               std::shared_ptr<net::Message> message,
+                               Callback onSend) {
+
             boost::asio::ip::udp::endpoint destination(
                     boost::asio::ip::address::from_string(dest.getIpAddr()), dest.port);
 
@@ -144,23 +159,23 @@ namespace kdml {
                 oarchive(message);
             }
 
-            std::cout << "SEND to " << dest << " " << *message << std::endl;
-
             socket.async_send_to(sb.data(), destination,
-                                 boost::bind(&Network::handleSend, this, message,
+                                 boost::bind(&Network::handleSend, this,
+                                             dest, message, std::move(onSend),
                                              boost::asio::placeholders::error,
                                              boost::asio::placeholders::bytes_transferred));
         }
 
-        void Network::handleSend(std::shared_ptr<Message> msg, const boost::system::error_code& error, std::size_t) {
+        void Network::handleSend(NodeInfo dest, std::shared_ptr<Message> msg,
+                                 Callback onSend,
+                                 const boost::system::error_code& error, std::size_t) {
             if (error) {
                 std::cerr << "Error sending message: " << *msg << std::endl;
-            } else if (msg->getMessageType() == MessageType::RESPONSE) {
-                // do nothing
-            } else if (msg->getMessageType() == MessageType::QUERY){
-                // TODO
-                // construct requests prior to send_RPC and pass them to send_RPC and handleSend
-                // insert request into map
+            }
+
+            std::cout << "SEND -> " << dest << " " << *msg << std::endl;
+            if (msg->getMessageType() == MessageType::QUERY && onSend){
+                onSend();
             }
         }
     }

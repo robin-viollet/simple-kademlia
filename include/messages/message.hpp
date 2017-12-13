@@ -5,11 +5,6 @@
 #ifndef SIMPLE_KADEMLIA_MESSAGE_HPP
 #define SIMPLE_KADEMLIA_MESSAGE_HPP
 
-// Boost earlier 1.60 doesn't have import_bits/export_bits
-#if BOOST_VERSION < 106000
-//#include "aux/cppint_import_export.hpp"
-#endif
-
 #include "messageType.hpp"
 #include <cereal/types/memory.hpp>
 #include <boost/multiprecision/cpp_int.hpp>

@@ -15,8 +15,6 @@ namespace kdml {
     namespace net {
         class Network;
     }
-    // number of concurrent lookups in node lookup
-    const int a = 1;
 
     struct NodeInfoWrapper {
         boost::multiprecision::uint256_t key;
@@ -31,16 +29,16 @@ namespace kdml {
     class NodeComparison {
     public:
         bool operator() (NodeInfoWrapper a, NodeInfoWrapper b) {
-            //todo: check if this is correct order
-            return (a.key ^ a.node.id) > (b.key ^ b.node.id);
+            return (a.key ^ a.node.id) < (b.key ^ b.node.id);
         }
     };
 
     struct RequestState {
         boost::multiprecision::uint256_t key;
         GetCallback callback;
-        int responses_waiting{0};
+        int responses_waiting {0};
         bool findValue {false};
+        bool store {false};
 
         bool node_comp (NodeInfoWrapper a, NodeInfoWrapper b) {
             return (a.key ^ a.node.id) < (b.key ^ b.node.id);
@@ -49,8 +47,6 @@ namespace kdml {
         std::set<boost::multiprecision::uint256_t> queried_nodes;
 
         std::priority_queue<NodeInfoWrapper, std::vector<NodeInfoWrapper>, NodeComparison> k_closest_nodes;
-
-//        std::priority_queue<NodeInfoWrapper, std::vector<NodeInfoWrapper>, decltype(&node_comp)> unqueried_nodes;
     };
 
     class Protocol {
@@ -79,9 +75,14 @@ namespace kdml {
         void node_lookup_callback(std::vector<NodeInfo> k_closest_nodes,
                                             boost::multiprecision::uint256_t key, bool found);
 
+        void find_value_callback(Nodes nodes, bool found, GetCallback callback);
         void store_callback(boost::multiprecision::uint256_t key, Nodes nodes);
 
     public:
+
+        // number of concurrent lookups in node lookup
+        static const int ALPHA = 3;
+
         explicit Protocol(const NodeInfo& owner);
 
         void async_get(boost::multiprecision::uint256_t key, kdml::GetCallback callback);
@@ -92,7 +93,7 @@ namespace kdml {
 
         NodeInfo getOwner() { return owner; };
 
-        void node_lookup(boost::multiprecision::uint256_t key, GetCallback callback, bool findValue);
+        void node_lookup(mp::uint256_t key, GetCallback callback, bool findValue, bool store);
         void handleReceive(const boost::system::error_code& error,
                            std::size_t /*bytes_transferred*/);
 
