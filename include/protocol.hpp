@@ -73,7 +73,7 @@ namespace kdml {
         //map of keys -> request state for lookup procedure
         std::map<boost::multiprecision::uint256_t, RequestState> lookups;
 
-        void node_lookup_callback(mp::uint256_t sender, RequestState request_state, Nodes k_nodes,
+        void node_lookup_callback(mp::uint256_t sender, RequestState& request_state, Nodes k_nodes,
                                             mp::uint256_t key, bool found);
 
         void find_value_callback(Nodes nodes, bool found, GetCallback callback);

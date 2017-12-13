@@ -179,7 +179,7 @@ namespace kdml {
 
     //TODO: Nodes that fail to respond should be removed from consideration unless they respond
 
-    void Protocol::node_lookup_callback(mp::uint256_t sender, RequestState request_state, Nodes k_nodes,
+    void Protocol::node_lookup_callback(mp::uint256_t sender, RequestState& request_state, Nodes k_nodes,
                                         mp::uint256_t key, bool found) {
 
         request_state.responses_waiting--;
@@ -309,7 +309,7 @@ namespace kdml {
         } else {
             auto it = lookups.find(outstanding.key);
             if (it != lookups.end()) {
-                RequestState request_state = it->second;
+                RequestState& request_state = it->second;
                 if (outstanding.findValue) {
                     auto value_res = std::dynamic_pointer_cast<net::FindValueResponse>(msg);
                     node_lookup_callback(msg->id, request_state, value_res->data, outstanding.key, value_res->found);
