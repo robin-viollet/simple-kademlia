@@ -83,13 +83,12 @@ namespace kdml {
                     probePeers(endpoints);
                 } else {
                     std::cout << "Kademlia: Probe Peers found: " << ep.getIpAddr() << std::endl;
-//                    auto bucket = routingTable.insertNode(ep);
-                    node_lookup(owner.id, [/*bucket*/](Nodes found) {
+                    node_lookup(owner.id, [](Nodes found) {
                     }, false);
                 }
             };
 
-            auto bucket = routingTable.insertNode(ep);
+            routingTable.insertNode(ep);
             network->send_ping(ep, onPong);
         }
     }
