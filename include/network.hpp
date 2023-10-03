@@ -35,7 +35,7 @@ namespace kdml {
 
         public:
 
-            explicit Network(NodeInfo node, boost::asio::io_service &ioService, Protocol *protocol);
+            explicit Network(NodeInfo node, boost::asio::io_context &ioService, Protocol *protocol);
             void startReceive();
             boost::system::error_code populateBuf(boost::asio::streambuf &sb);
             NodeInfo getRemotePeer();
